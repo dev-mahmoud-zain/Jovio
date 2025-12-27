@@ -1,0 +1,7 @@
+export enum OTP_TypeEnum {
+    confirm_Email = "confirm_Email",
+    forget_Password = "forget_Password",
+    change_Password = "change_Password",
+    update_Email = "update_Email",
+    confirm_Company_Email = "confirm_Company_Email",
+}

@@ -1,0 +1,1 @@
+export {GeneralFields} from "./general.fields.dto"
