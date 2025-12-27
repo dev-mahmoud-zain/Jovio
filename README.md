@@ -101,14 +101,4 @@ npm run build
 npm run start:prod
 ```
 
----
-
-## 📝 How to Update this README
-
-To keep this documentation accurate, please update the **Key Features** section whenever a new module or significant functionality is implemented. 
-1. Add the new feature under the appropriate category.
-2. If it's a new technical implementation, update the **Technical Infrastructure** section.
-3. Keep the **Project Structure** tree updated if new top-level modules are added.
-
----
 *Last Updated: December 27, 2025*
