@@ -1,0 +1,55 @@
+import { Types } from "mongoose";
+import { GenderEnum } from "../Enums/gender.enum";
+import { ProviderEnum } from "../Enums/provider.enum";
+import { RoleEnum } from "../Enums/role.enum";
+import { UserStatusEnum } from "../Enums/user.status.enum";
+import { I_File } from "./file.interface";
+import { I_UserSocial } from "./user.social.interface";
+
+export interface I_User {
+    firstName: string;
+    lastName: string;
+
+    email: string;
+    emailConfirmedAt?: Date;
+    newEmail?: string;
+
+    phoneNumber?: string;
+
+    provider: ProviderEnum;
+
+    role: RoleEnum;
+
+    status: UserStatusEnum;
+
+    bio?: string;
+
+    socialLinks: I_UserSocial;
+
+    password: string;
+
+    gender: GenderEnum;
+
+    dateOfBirth: Date;
+
+    changeCredentialsTime: Date;
+
+    profilePicture: I_File;
+    coverPicture: I_File;
+    gallery: I_File[];
+
+    resume: I_File;
+
+    bannedAt?: Date;
+    bannedUntil?: Date;
+    bannedReason?: string;
+    bannedBy?: Types.ObjectId;
+
+    freezedAt?: Date;
+    freezedUntil?: Date;
+    freezedReason?: string;
+    freezedBy?: Types.ObjectId;
+
+    restoredAt?: Date;
+    restoredBy?: Types.ObjectId;
+}
