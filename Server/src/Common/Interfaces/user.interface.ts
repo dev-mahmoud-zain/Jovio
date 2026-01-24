@@ -5,6 +5,7 @@ import { RoleEnum } from "../Enums/role.enum";
 import { UserStatusEnum } from "../Enums/user.status.enum";
 import { I_File } from "./file.interface";
 import { I_UserSocial } from "./user.social.interface";
+import { I_UserGallery } from "./gallery.interface";
 
 export interface I_User {
     _id: Types.ObjectId;
@@ -26,7 +27,13 @@ export interface I_User {
 
     bio?: string;
 
-    socialLinks: I_UserSocial;
+/*     jobTitle?: string; // Need To Add To SRS File
+
+    companyName?: string; // Need To Add To SRS File
+
+    location?: string; //  Need To Add To SRS File */
+
+    socialLinks?: I_UserSocial;
 
     password: string;
 
@@ -34,13 +41,15 @@ export interface I_User {
 
     dateOfBirth: Date;
 
-    changeCredentialsTime: Date;
+    changeCredentialsTime?: Date;
 
     profilePicture: I_File;
     coverPicture: I_File;
-    gallery: I_File[];
+    gallery: I_UserGallery[];
 
     resume: I_File;
+
+    skills: string[];
 
     bannedAt?: Date;
     bannedUntil?: Date;
