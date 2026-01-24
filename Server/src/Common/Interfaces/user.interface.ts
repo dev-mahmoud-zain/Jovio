@@ -7,6 +7,8 @@ import { I_File } from "./file.interface";
 import { I_UserSocial } from "./user.social.interface";
 
 export interface I_User {
+    _id: Types.ObjectId;
+
     firstName: string;
     lastName: string;
 
@@ -52,4 +54,7 @@ export interface I_User {
 
     restoredAt?: Date;
     restoredBy?: Types.ObjectId;
+
+    createdAt?: Date;
+    updatedAt?: Date;
 }
