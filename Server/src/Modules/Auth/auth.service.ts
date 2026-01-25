@@ -8,35 +8,27 @@ const ErrorResponse = new ExceptionFactory();
 
 @Injectable()
 export class AuthService {
+  constructor(private readonly userRepository: UserRepository) {}
 
-    constructor(
-        private readonly userRepository: UserRepository
-    ) { }
+  async signUp(body: SignupDto) {
+    await this.userRepository.findExistsUser({
+      filter: [
+        { key: 'email', value: body.email },
+        { key: 'phoneNumber', value: body.phoneNumber || '' },
+      ],
+      throwError: true,
+    });
 
-    async signup(body: SignupDto) {
+    //  للإيميل و الفون  Enc  الكومنت ده عشان لما أصحى أفتكر اني أعمل هاش للباسوورد و
 
+    const { confirmPassword, ...userData } = body;
 
-        await this.userRepository.findExistsUser({
-            filter: [
-                { key: 'email', value: body.email },
-                { key: 'phoneNumber', value: body.phoneNumber || '' }
-            ],
-            throwError: true
-        });
-
-        //  للإيميل و الفون  Enc  الكومنت ده عشان لما أصحى أفتكر اني أعمل هاش للباسوورد و 
-
-        const { confirmPassword, ...userData } = body
-
-        await this.userRepository.create({
-            data: [
-                {
-                    ...userData
-                }
-            ]
-        })
-
-        return { message: 'User signed up successfully' };
-    }
-
+    await this.userRepository.create({
+      data: [
+        {
+          ...userData,
+        },
+      ],
+    });
+  }
 }

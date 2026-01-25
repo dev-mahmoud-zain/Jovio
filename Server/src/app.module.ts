@@ -1,4 +1,9 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  OnModuleInit,
+} from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -7,11 +12,14 @@ import { AuthController } from './Modules/Auth/auth.controller';
 import { AuthService } from './Modules/Auth/auth.service';
 import { UserRepository } from './Database/Repository/user.repository';
 import { User, UserSchema } from './Database/Models/user.model';
+import { CommonModule } from './Common/common.module';
+import { LoggerMiddleware } from './Common/Middlewares/logging.middlewares';
 
 @Module({
   imports: [
+    CommonModule,
     ConfigModule.forRoot({
-      envFilePath: '.env',
+      envFilePath: '../.env',
       isGlobal: true,
     }),
     MongooseModule.forRootAsync({
@@ -21,22 +29,22 @@ import { User, UserSchema } from './Database/Models/user.model';
       }),
       inject: [ConfigService],
     }),
-    MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema }
-    ]),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
-  controllers: [AppController,AuthController],
-  providers: [AppService,AuthService,UserRepository],
+  controllers: [AppController, AuthController],
+  providers: [AppService, AuthService, UserRepository],
 })
-export class AppModule implements OnModuleInit {
-  constructor(@InjectConnection () private readonly connection) {}
-  
+export class AppModule implements OnModuleInit, NestModule {
+  constructor(@InjectConnection() private readonly connection) {}
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
   async onModuleInit() {
     try {
       await this.connection.db.admin().ping();
       console.log('🟢 DateBase Connected Successfully');
     } catch (error) {
-       console.log('🔴 DateBase Not Connected');
+      console.log('🔴 DateBase Not Connected');
     }
   }
 }
