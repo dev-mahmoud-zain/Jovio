@@ -3,32 +3,52 @@ import { UserRepository } from './../../Database/Repository/user.repository';
 import { Injectable } from '@nestjs/common';
 import { SignupDto } from './dto/signup.dto';
 import { ExceptionFactory } from 'src/Common/Utils/Response/error.response';
+import { generateHash } from 'src/Common/Utils/Security/hash';
+import { EncryptionService } from 'src/Common/Utils/Security/encryption';
+
 
 const ErrorResponse = new ExceptionFactory();
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly userRepository: UserRepository) {}
+    constructor(
+        private readonly userRepository: UserRepository,
+        private readonly encryptionService: EncryptionService
+    ) { }
 
-  async signUp(body: SignupDto) {
-    await this.userRepository.findExistsUser({
-      filter: [
-        { key: 'email', value: body.email },
-        { key: 'phoneNumber', value: body.phoneNumber || '' },
-      ],
-      throwError: true,
-    });
+    async signup(body: SignupDto) {
 
-    //  للإيميل و الفون  Enc  الكومنت ده عشان لما أصحى أفتكر اني أعمل هاش للباسوورد و
+        await this.userRepository.findExistsUser({
+            filter: [
+                { key: 'email', value: body.email },
+                { key: 'phoneNumber', value: body.phoneNumber || '' }
+            ],
+            throwError: true
+        });
 
-    const { confirmPassword, ...userData } = body;
+        const { confirmPassword, ...userData } = body
 
-    await this.userRepository.create({
-      data: [
-        {
-          ...userData,
-        },
-      ],
-    });
-  }
+        userData.password = await generateHash({
+            text: body.password
+        })
+
+        userData.email = this.encryptionService.encrypt(userData.email);
+        userData.phoneNumber = this.encryptionService.encrypt(userData.phoneNumber);
+
+
+        if (!await this.userRepository.create({
+            data: [
+                {
+                    ...userData
+                }
+            ]
+        })) {
+            throw ErrorResponse.serverError({
+                message: "Fail To Sign-up Please Retry Another Time"
+            })
+        }
+
+        return { message: 'User signed up successfully' };
+    }
+
 }

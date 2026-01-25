@@ -3,6 +3,7 @@ import { DatabaseRepository } from "./base.repository";
 import { H_UserDocument, User } from "../Models/user.model";
 import { Model, Types } from "mongoose";
 import { ExceptionFactory } from "src/Common/Utils/Response/error.response";
+import { EncryptionService } from "src/Common/Utils/Security/encryption";
 
 const ErrorResponse = new ExceptionFactory();
 
@@ -11,6 +12,8 @@ export class UserRepository extends DatabaseRepository<User> {
   constructor(
     @InjectModel(User.name)
     protected override readonly model: Model<H_UserDocument>,
+    private readonly encryptionService: EncryptionService
+
   ) {
     super(model);
   }
@@ -29,14 +32,12 @@ export class UserRepository extends DatabaseRepository<User> {
 
     const userExists = await this.findOne({
       filter: {
-        $or: filter.map((f) => {
-          return {
-            [f.key]: f.value
-          }
-        })
+        $or: filter.map((f) => ({
+          [f.key]: this.encryptionService.encrypt(f.value as string)
+        }))
       }
-    })
-
+    });
+    
 
     if (throwError && userExists) {
 
