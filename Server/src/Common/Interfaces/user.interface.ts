@@ -8,10 +8,12 @@ import { I_UserSocial } from "./user.social.interface";
 import { I_UserGallery } from "./gallery.interface";
 
 export interface I_User {
-    _id: Types.ObjectId;
+    _id?: Types.ObjectId;
 
     firstName: string;
     lastName: string;
+
+    fullName: string;
 
     email: string;
     emailConfirmedAt?: Date;
@@ -23,7 +25,7 @@ export interface I_User {
 
     role: RoleEnum;
 
-    status: UserStatusEnum;
+    status?: UserStatusEnum;
 
     bio?: string;
 
@@ -39,17 +41,17 @@ export interface I_User {
 
     gender: GenderEnum;
 
-    dateOfBirth: Date;
+    dateOfBirth: string;
 
     changeCredentialsTime?: Date;
 
-    profilePicture: I_File;
-    coverPicture: I_File;
-    gallery: I_UserGallery[];
+    profilePicture?: I_File;
+    coverPicture?: I_File;
+    gallery?: I_UserGallery[];
 
-    resume: I_File;
+    resume?: I_File;
 
-    skills: string[];
+    skills?: string[];
 
     bannedAt?: Date;
     bannedUntil?: Date;

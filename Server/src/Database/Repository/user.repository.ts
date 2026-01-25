@@ -1,0 +1,67 @@
+import { InjectModel } from "@nestjs/mongoose";
+import { DatabaseRepository } from "./base.repository";
+import { H_UserDocument, User } from "../Models/user.model";
+import { Model, Types } from "mongoose";
+import { ExceptionFactory } from "src/Common/Utils/Response/error.response";
+
+const ErrorResponse = new ExceptionFactory();
+
+
+export class UserRepository extends DatabaseRepository<User> {
+  constructor(
+    @InjectModel(User.name)
+    protected override readonly model: Model<H_UserDocument>,
+  ) {
+    super(model);
+  }
+
+
+  async findExistsUser(
+    {
+      filter,
+      throwError = true
+    }: {
+      filter: { key: string, value: string | number | Date | Types.ObjectId }[],
+      throwError?: boolean
+    }
+  ): Promise<H_UserDocument | null> {
+
+
+    const userExists = await this.findOne({
+      filter: {
+        $or: filter.map((f) => {
+          return {
+            [f.key]: f.value
+          }
+        })
+      }
+    })
+
+
+    if (throwError && userExists) {
+
+      const issus: { path: string, info: string }[] = []
+
+      filter.forEach((f) => {
+        issus.push({
+          path: f.key,
+          info: `User With ${f.key} already exists`
+        })
+      })
+
+
+      throw ErrorResponse.conflict({
+        message: 'User Already Exists',
+        issus
+      })
+
+
+    }
+
+    return userExists;
+
+
+  }
+
+
+}

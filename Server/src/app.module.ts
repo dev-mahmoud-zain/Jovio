@@ -3,6 +3,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { InjectConnection, MongooseModule } from '@nestjs/mongoose';
+import { AuthController } from './Modules/Auth/auth.controller';
+import { AuthService } from './Modules/Auth/auth.service';
+import { UserRepository } from './Database/Repository/user.repository';
+import { User, UserSchema } from './Database/Models/user.model';
 
 @Module({
   imports: [
@@ -17,9 +21,12 @@ import { InjectConnection, MongooseModule } from '@nestjs/mongoose';
       }),
       inject: [ConfigService],
     }),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema }
+    ]),
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController,AuthController],
+  providers: [AppService,AuthService,UserRepository],
 })
 export class AppModule implements OnModuleInit {
   constructor(@InjectConnection () private readonly connection) {}

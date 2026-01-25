@@ -15,14 +15,7 @@ import type { I_UserSocial } from "src/Common/Interfaces/user.social.interface";
     toObject: { virtuals: true },
     strictQuery: true
 })
-export class UserModel implements I_User {
-
-    @Prop({
-        type: Types.ObjectId,
-        required: true,
-        auto: true
-    })
-    _id: Types.ObjectId;
+export class User implements I_User {
 
     @Prop({
         type: String,
@@ -31,7 +24,6 @@ export class UserModel implements I_User {
         max: 30
     })
     firstName: string;
-
 
     @Prop({
         type: String,
@@ -42,7 +34,7 @@ export class UserModel implements I_User {
     lastName: string;
 
     @Virtual({
-        get: function (this: UserModel) {
+        get: function (this: User) {
             return `${this.firstName} ${this.lastName}`;
         },
         set: function (value: string) {
@@ -50,8 +42,7 @@ export class UserModel implements I_User {
             this.set({ firstName, lastName });
         }
     })
-    userName: string
-
+    fullName: string
 
     @Prop({
         type: String,
@@ -81,27 +72,28 @@ export class UserModel implements I_User {
     })
     phoneNumber?: string;
 
-
     @Prop({
         type: String,
         required: true,
-        enum: ProviderEnum
+        enum: ProviderEnum,
+        default:ProviderEnum.SYSTEM
     })
     provider: ProviderEnum;
 
     @Prop({
         type: String,
         required: true,
-        enum: RoleEnum
+        enum: RoleEnum,
+        default:RoleEnum.USER
     })
     role: RoleEnum;
 
     @Prop({
         type: String,
-        required: true,
+        required: false,
         enum: UserStatusEnum
     })
-    status: UserStatusEnum;
+    status?: UserStatusEnum;
 
     @Prop({
         type: String,
@@ -118,7 +110,7 @@ export class UserModel implements I_User {
 
     @Prop({
         type: String,
-        required: true
+        required: function(this: User) { return this.provider === ProviderEnum.SYSTEM; },
     })
     password: string;
 
@@ -130,10 +122,10 @@ export class UserModel implements I_User {
     gender: GenderEnum;
 
     @Prop({
-        type: Date,
+        type: String,
         required: true
     })
-    dateOfBirth: Date;
+    dateOfBirth: string;
 
     @Prop({
         type: Date,
@@ -143,33 +135,33 @@ export class UserModel implements I_User {
 
     @Prop({
         type: <I_File>{},
-        required: true
+        required: false
     })
-    profilePicture: I_File;
+    profilePicture?: I_File;
     @Prop({
         type: <I_File>{},
-        required: true
+        required: false
     })
-    coverPicture: I_File;
+    coverPicture?: I_File;
     @Prop({
         type: [<I_UserGallery>{}],
-        required: true,
+        required: false,
         default: []
     })
-    gallery: I_UserGallery[];
+    gallery?: I_UserGallery[];
 
     @Prop({
         type: <I_File>{},
-        required: true
+        required: false
     })
-    resume: I_File;
+    resume?: I_File;
 
     @Prop({
         type: [String],
-        required: true,
+        required: false,
         default: []
     })
-    skills: string[];
+    skills? : string[];
 
     @Prop({
         type: Date,
@@ -233,12 +225,9 @@ export class UserModel implements I_User {
 
 }
 
-export type H_UserDocument = HydratedDocument<UserModel>;
+export type H_UserDocument = HydratedDocument<User>;
 
-export const UserSchema = SchemaFactory.createForClass(UserModel);
+export const UserSchema = SchemaFactory.createForClass(User);
 
-MongooseModule.forFeature([
-  { name: UserModel.name, schema: UserSchema }
-])
 
 UserSchema.index({ email: 1 });
