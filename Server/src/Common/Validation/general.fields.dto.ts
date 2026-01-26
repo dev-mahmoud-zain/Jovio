@@ -3,6 +3,7 @@ import {
   IsEnum,
   IsMongoId,
   IsString,
+  Length,
   Matches,
   MaxLength,
   MinLength,
@@ -53,4 +54,9 @@ export class GeneralFieldsDto {
 
   @IsEnum(UserStatusEnum)
   userStatus: UserStatusEnum;
+
+
+  @Length(6)
+  @IsString()
+  otpCode:string
 }

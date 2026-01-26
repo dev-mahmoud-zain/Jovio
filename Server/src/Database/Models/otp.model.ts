@@ -1,3 +1,4 @@
+import { Next } from "@nestjs/common";
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument, Types } from "mongoose";
 import { I_Otp } from "src/Common/Interfaces/otp.interface";
@@ -28,6 +29,7 @@ export class OTP implements I_Otp {
     })
     otp: string;
 
+
     @Prop({
         type: String,
         enum: Object.values(OtpTypeEnum),
@@ -49,8 +51,7 @@ export class OTP implements I_Otp {
     isUsed: Boolean;
 
     @Prop({
-        type: Boolean,
-        default: false,
+        type: Date,
         required: function (this: OTP) { return this.isUsed === true },
     })
     usedAt?: Date;
@@ -75,3 +76,19 @@ export type H_OtpDocument = HydratedDocument<OTP>;
 export const OtpSchema = SchemaFactory.createForClass(OTP);
 
 OtpSchema.index({ userId: 1, otp: 1 });
+
+OtpSchema.pre('updateOne', function () {
+  const update = this.getUpdate() as any;
+
+  if (!update) return;
+
+  // حالة: update مباشر
+  if (update.isUsed === true) {
+    update.usedAt = new Date();
+  }
+
+  // حالة: $set
+  if (update.$set?.isUsed === true) {
+    update.$set.usedAt = new Date();
+  }
+});

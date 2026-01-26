@@ -7,6 +7,7 @@ import { generateHash } from 'src/Common/Utils/Security/hash';
 import { EncryptionService } from 'src/Common/Utils/Security/encryption';
 import { OtpService } from 'src/Common/Utils/Otp/otp.service';
 import { OtpTypeEnum } from 'src/Common/Types/otp.types';
+import { VerifyAccountDto } from './dto/verify.account.dto';
 
 
 const ErrorResponse = new ExceptionFactory();
@@ -62,5 +63,38 @@ export class AuthService {
 
 
     }
+
+
+    async verifyAccount(body: VerifyAccountDto) {
+
+        const { email, otpCode } = body
+
+        const user = await this.userRepository.findExistsUser({
+            filter: [{
+                key: "email",
+                value: email
+            }],
+            throwError: false
+        },);
+
+        if (!user) {
+            throw ErrorResponse.notFound({
+                message: "No User Matched With This Email " + email
+            });
+        }
+
+
+        await this.otpService.verifyOtp({
+            userId: user._id,
+            otpCode
+        });
+
+        user.emailConfirmedAt = new Date;
+        user.save()
+
+
+    }
+
+
 
 }

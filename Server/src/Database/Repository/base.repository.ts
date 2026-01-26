@@ -1,5 +1,8 @@
-import { PopulateOptions } from "mongoose";
+import { MongooseUpdateQueryOptions, PopulateOptions, UpdateQuery, UpdateWriteOpResult } from "mongoose";
 import { Model, HydratedDocument, CreateOptions, QueryFilter, QueryOptions } from "mongoose";
+
+import * as mongodb from "mongodb";
+import { QueryWithHelpers } from "mongoose";
 
 export abstract class DatabaseRepository
     <
@@ -34,6 +37,7 @@ export abstract class DatabaseRepository
         getFreezed?: boolean
     }) {
 
+
         const finalFilter = getFreezed
             ? filter
             : {
@@ -53,6 +57,18 @@ export abstract class DatabaseRepository
         }
 
         return await doc.exec() as unknown as TDocument | null;
+    }
+
+    async updateOne({
+        filter,
+        update,
+        options
+    }: {
+        filter: QueryFilter<TRawDocument>,
+        update: UpdateQuery<TRawDocument>,
+        options?: (mongodb.UpdateOptions & MongooseUpdateQueryOptions<TRawDocument>) | null
+    }){
+        return this.model.updateOne(filter, update, options)
     }
 
 

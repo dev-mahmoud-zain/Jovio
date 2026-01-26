@@ -3,9 +3,10 @@ import { Injectable } from "@nestjs/common";
 import { OtpRepository } from 'src/Database/Repository/otp.repository';
 import { Types } from 'mongoose';
 import { OtpTypeEnum } from 'src/Common/Types/otp.types';
-import { generateHash } from '../Security/hash';
+import { compareHash, generateHash } from '../Security/hash';
 import { EmailService } from '../Email/send-email';
 import { ExceptionFactory } from '../Response/error.response';
+import { EncryptionService } from '../Security/encryption';
 
 
 const ErrorResponse = new ExceptionFactory();
@@ -17,7 +18,7 @@ export class OtpService {
     constructor(
         private readonly otpRepository: OtpRepository,
         private readonly emailService: EmailService,
-
+        private readonly encryptionService: EncryptionService
     ) { }
 
 
@@ -80,9 +81,67 @@ export class OtpService {
 
     }
 
-    
+    async verifyOtp({
+        userId,
+        otpCode,
+        type
+    }: {
+        userId: Types.ObjectId,
+        otpCode: string,
+        type?: OtpTypeEnum // ممكن احتاجه بعدين بس لسة مش عارف هحتاجه في ايه
+    }) {
+
+        const otp = await this.otpRepository.findOne({
+            filter: {
+                userId,
+                isUsed: false
+            }
+        })
+
+        if (!otp) {
+            throw ErrorResponse.notFound({
+                message: "No Otp Found For This User"
+            })
+        }
+
+        if (otp.expiresAt <= new Date) {
+            throw ErrorResponse.badRequest({
+                message: "Your Otp Code Was Expired"
+            })
+        }
+
+        if (!await compareHash({
+            plainText: otpCode,
+            hashText: otp.otp
+        })) {
+
+            throw ErrorResponse.badRequest({
+                message: "Invalid Otp Code"
+            });
+        }
 
 
+        const updated = await this.otpRepository.updateOne({
+            filter: {
+                _id: otp._id
+            },
+            update: {
+                $set: {
+                    isUsed: true
+                }
+            }
+
+        });
+
+        if (!updated.modifiedCount) {
+            throw ErrorResponse.serverError({
+                message: "Fail To Verify Otp Now , Please try again later"
+            })
+        }
+
+        return true;
+
+    }
 
 
 }
