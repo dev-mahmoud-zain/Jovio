@@ -229,5 +229,4 @@ export type H_UserDocument = HydratedDocument<User>;
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-
 UserSchema.index({ email: 1 });

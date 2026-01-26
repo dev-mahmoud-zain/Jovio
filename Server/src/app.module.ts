@@ -32,10 +32,10 @@ import { LoggerMiddleware } from './Common/Middlewares/logging.middlewares';
       }),
       inject: [ConfigService],
     }),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+
   ],
   controllers: [AppController, AuthController],
-  providers: [AppService, AuthService, UserRepository],
+  providers: [AppService, AuthService],
 })
 export class AppModule implements OnModuleInit, NestModule {
   constructor(@InjectConnection() private readonly connection) { }

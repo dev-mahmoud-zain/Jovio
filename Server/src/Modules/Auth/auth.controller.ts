@@ -21,6 +21,6 @@ export class AuthController {
   @Post('sign-up')
   async signUp(@Body() body: SignupDto) {
     await this.authService.signup(body);
-    return { message: 'User signed up successfully' };
+    return { message: 'User signed up successfully , confirmation OTP sent to your email ' };
   }
 }
