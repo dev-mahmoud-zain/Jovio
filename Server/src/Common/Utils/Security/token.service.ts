@@ -66,13 +66,8 @@ export class TokenService {
 
     }
 
-    async createLoginCredentials({
-        userId,
-        userRole
-    }: {
-        userId: Types.ObjectId | string,
-        userRole: RoleEnum
-    }) {
+    async createLoginCredentials(userId: Types.ObjectId | string,
+        userRole: RoleEnum) {
 
         const signature = userRole === RoleEnum.USER ? SignatureLevelEnum.BEARER : SignatureLevelEnum.SYSTEM
 
@@ -100,7 +95,7 @@ export class TokenService {
 
     }
 
-    setTokenTocCookies(res: Response, token: string, type: TokenTypeEnum) {
+    setTokenToCookies(res: Response, token: string, type: TokenTypeEnum) {
 
         const isAccess = type === TokenTypeEnum.ACCESS;
 

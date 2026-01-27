@@ -131,14 +131,10 @@ export class AuthService {
             })
         }
 
-        const { access_token, refresh_token } = await this.tokenService.createLoginCredentials({
-            userId: user._id,
-            userRole: user.role
-        });
+        const { access_token, refresh_token } = await this.tokenService.createLoginCredentials(user._id,user.role);
 
-
-        this.tokenService.setTokenTocCookies(res, access_token, TokenTypeEnum.ACCESS);
-        this.tokenService.setTokenTocCookies(res, refresh_token, TokenTypeEnum.REFRESH);
+        this.tokenService.setTokenToCookies(res, access_token, TokenTypeEnum.ACCESS);
+        this.tokenService.setTokenToCookies(res, refresh_token, TokenTypeEnum.REFRESH);
     }
 
 }
