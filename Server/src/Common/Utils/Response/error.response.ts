@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, HttpStatus, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, ForbiddenException, HttpStatus, InternalServerErrorException, NotFoundException, UnauthorizedException } from "@nestjs/common";
 
 interface ExceptionOptions {
   message?: string;
@@ -53,5 +53,12 @@ export class ExceptionFactory {
       this.createPayload('ConflictException', HttpStatus.CONFLICT, options),
     );
   }
+
+  unauthorized(options: ExceptionOptions = {}) {
+    return new UnauthorizedException(
+      this.createPayload('UnauthorizedException', HttpStatus.UNAUTHORIZED, options),
+    );
+  }
+
 
 }

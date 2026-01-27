@@ -9,17 +9,15 @@ import {
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { InjectConnection, MongooseModule } from '@nestjs/mongoose';
-import { AuthController } from './Modules/Auth/auth.controller';
-import { AuthService } from './Modules/Auth/auth.service';
-import { UserRepository } from './Database/Repository/user.repository';
-import { User, UserSchema } from './Database/Models/user.model';
 import { CommonModule } from './Common/Common-Modules/common.module';
 import { LoggerMiddleware } from './Common/Middlewares/logging.middlewares';
+import { AuthModule } from './Modules/Auth/auth.module';
 
 @Module({
   imports: [
     
     CommonModule,
+    AuthModule,
 
     ConfigModule.forRoot({
       envFilePath: '.env',
@@ -34,8 +32,8 @@ import { LoggerMiddleware } from './Common/Middlewares/logging.middlewares';
     }),
 
   ],
-  controllers: [AppController, AuthController],
-  providers: [AppService, AuthService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule implements OnModuleInit, NestModule {
   constructor(@InjectConnection() private readonly connection) { }

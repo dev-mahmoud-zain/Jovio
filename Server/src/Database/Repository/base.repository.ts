@@ -1,4 +1,4 @@
-import { MongooseUpdateQueryOptions, PopulateOptions, UpdateQuery, UpdateWriteOpResult } from "mongoose";
+import { MongooseUpdateQueryOptions, PopulateOptions, ProjectionType, Types, UpdateQuery, UpdateWriteOpResult } from "mongoose";
 import { Model, HydratedDocument, CreateOptions, QueryFilter, QueryOptions } from "mongoose";
 
 import * as mongodb from "mongodb";
@@ -59,6 +59,18 @@ export abstract class DatabaseRepository
         return await doc.exec() as unknown as TDocument | null;
     }
 
+    async findById({
+        id,
+        projection,
+        options
+    }: {
+        id: Types.ObjectId | string,
+        projection?: ProjectionType<TRawDocument>,
+        options?: QueryOptions<TRawDocument>
+    }) {
+        return this.model.findById(id,projection,options)
+    }
+
     async updateOne({
         filter,
         update,
@@ -67,7 +79,7 @@ export abstract class DatabaseRepository
         filter: QueryFilter<TRawDocument>,
         update: UpdateQuery<TRawDocument>,
         options?: (mongodb.UpdateOptions & MongooseUpdateQueryOptions<TRawDocument>) | null
-    }){
+    }) {
         return this.model.updateOne(filter, update, options)
     }
 

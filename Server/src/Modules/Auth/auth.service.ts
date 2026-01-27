@@ -3,11 +3,14 @@ import { UserRepository } from './../../Database/Repository/user.repository';
 import { Injectable } from '@nestjs/common';
 import { SignupDto } from './dto/signup.dto';
 import { ExceptionFactory } from 'src/Common/Utils/Response/error.response';
-import { generateHash } from 'src/Common/Utils/Security/hash';
+import { compareHash, generateHash } from 'src/Common/Utils/Security/hash';
 import { EncryptionService } from 'src/Common/Utils/Security/encryption';
 import { OtpService } from 'src/Common/Utils/Otp/otp.service';
 import { OtpTypeEnum } from 'src/Common/Types/otp.types';
 import { VerifyAccountDto } from './dto/verify.account.dto';
+import { SystemLoginDto } from './dto/login.dto';
+import { TokenService, TokenTypeEnum } from 'src/Common/Utils/Security/token.service';
+import { Response } from 'express';
 
 
 const ErrorResponse = new ExceptionFactory();
@@ -17,7 +20,8 @@ export class AuthService {
     constructor(
         private readonly userRepository: UserRepository,
         private readonly encryptionService: EncryptionService,
-        private readonly otpService: OtpService
+        private readonly otpService: OtpService,
+        private readonly tokenService: TokenService
     ) { }
 
     async signup(body: SignupDto) {
@@ -64,7 +68,6 @@ export class AuthService {
 
     }
 
-
     async verifyAccount(body: VerifyAccountDto) {
 
         const { email, otpCode } = body
@@ -95,6 +98,47 @@ export class AuthService {
 
     }
 
+    async login(body: SystemLoginDto, res: Response) {
 
+        const user = await this.userRepository.findExistsUser({
+            filter: [{
+                key: "email",
+                value: body.email
+            }],
+            throwError: false
+        });
+
+        const message: string = "Invalid Login Data";
+
+        if (!user) {
+            throw ErrorResponse.unauthorized({
+                message
+            })
+        }
+
+        if (user && !user.emailConfirmedAt) {
+            throw ErrorResponse.badRequest({
+                message: "Please Verify Your Account To Login"
+            })
+        }
+
+        if (!compareHash({
+            plainText: body.password,
+            hashText: user.password
+        })) {
+            throw ErrorResponse.unauthorized({
+                message
+            })
+        }
+
+        const { access_token, refresh_token } = await this.tokenService.createLoginCredentials({
+            userId: user._id,
+            userRole: user.role
+        });
+
+
+        this.tokenService.setTokenTocCookies(res, access_token, TokenTypeEnum.ACCESS);
+        this.tokenService.setTokenTocCookies(res, refresh_token, TokenTypeEnum.REFRESH);
+    }
 
 }
