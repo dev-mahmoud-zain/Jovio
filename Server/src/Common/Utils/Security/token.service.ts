@@ -1,9 +1,11 @@
+import { JwtRepository } from 'src/Database/Repository/jwt.repository';
 
 import { Injectable } from "@nestjs/common";
 import { Types } from "mongoose";
 import { RoleEnum } from "src/Common/Enums/role.enum";
 import { sign } from "jsonwebtoken"
-import { Response } from "express";
+import { DeviceInfo } from 'src/Database/Models/jwt.model';
+import { generateHash } from './hash';
 
 
 export enum SignatureLevelEnum {
@@ -27,8 +29,10 @@ interface I_SignToken {
 
 @Injectable()
 export class TokenService {
-    constructor() {
-
+    constructor(
+        private readonly jwtRepository:JwtRepository
+    ) {
+        
     }
 
     private getSecretKey(userRole: RoleEnum, tokenType: TokenTypeEnum): string {
@@ -58,10 +62,15 @@ export class TokenService {
 
         const expiresIn = data.tokenType === TokenTypeEnum.ACCESS ? "1h" : "7d"
 
-        return sign(data.payload, SECRET_KEY, {
-            expiresIn,
-            jwtid: crypto.randomUUID()
-        })
+        const jti = crypto.randomUUID();
+
+        return {
+            token: sign(data.payload, SECRET_KEY, {
+                expiresIn,
+                jwtid: jti
+            }),
+            jti
+        }
 
 
     }
@@ -71,49 +80,62 @@ export class TokenService {
 
         const signature = userRole === RoleEnum.USER ? SignatureLevelEnum.BEARER : SignatureLevelEnum.SYSTEM
 
-        const access_token = `${signature} ${await this.signToken({
+        const access_token = await this.signToken({
             payload: {
                 userId,
                 userRole
             },
             tokenType: TokenTypeEnum.ACCESS
-        })}`;
+        });
 
-
-        const refresh_token = `${signature} ${await this.signToken({
+        const refresh_token = await this.signToken({
             payload: {
                 userId,
                 userRole
             },
             tokenType: TokenTypeEnum.REFRESH
-        })}`
+        })
+
 
         return {
-            access_token,
-            refresh_token
+            access_token: {
+                token: `${signature} ${access_token.token}`,
+                jti: access_token.jti
+            },
+            refresh_token: {
+                token: `${signature} ${refresh_token.token}`,
+                jti: refresh_token.jti
+            }
         }
 
     }
 
-    setTokenToCookies(res: Response, token: string, type: TokenTypeEnum) {
+    async saveJwt(userId: Types.ObjectId,
+        jti: string,
+        token: string,
+        type: TokenTypeEnum,
+        session: {
+            deviceInfo: DeviceInfo,
+            ipAddress: string,
+            userAgent: string
+        }) {
 
-        const isAccess = type === TokenTypeEnum.ACCESS;
+            const expiresAt = type === TokenTypeEnum.ACCESS ? new Date(Date.now() + 60 * 60 * 1000) :new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+            
+            this.jwtRepository.create({
+                data:[{
+                    userId,
+                    token: await generateHash({text:token}),
+                    type,
+                    jti,
+                    ipAddress:session.ipAddress,
+                    deviceInfo:session.deviceInfo,
+                    userAgent:session.userAgent,
+                    expiresAt
+                }]
+            })
 
-        const name = isAccess ? "access_token" : "refresh_token";
-
-        const maxAge = isAccess
-            ? 1 * 60 * 60 * 1000
-            : 7 * 24 * 60 * 60 * 1000;
-
-        res.cookie(name, token, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "lax",
-            maxAge,
-            path: isAccess ? "/" : "/api/auth/refresh-token"
-        })
-
-
+            
     }
 
 

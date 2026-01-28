@@ -52,8 +52,6 @@ export class OtpService {
 
         }
 
-
-
         switch (type) {
             case OtpTypeEnum.VERIFY_ACCOUNT:
 
@@ -76,8 +74,6 @@ export class OtpService {
             default:
                 break;
         }
-
-
 
     }
 
@@ -143,7 +139,7 @@ export class OtpService {
 
     }
 
-    login
+    
 
 
 }

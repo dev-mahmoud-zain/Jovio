@@ -59,6 +59,18 @@ export abstract class DatabaseRepository
         return await doc.exec() as unknown as TDocument | null;
     }
 
+    async find({
+        filter,
+        projection,
+        options
+    }: {
+        filter?: QueryFilter<TRawDocument>,
+        projection?: ProjectionType<TRawDocument>,
+        options?: QueryOptions<TRawDocument> & mongodb.Abortable
+    }) {
+      return  this.model.find(filter,projection,options)
+    }
+
     async findById({
         id,
         projection,
@@ -68,7 +80,7 @@ export abstract class DatabaseRepository
         projection?: ProjectionType<TRawDocument>,
         options?: QueryOptions<TRawDocument>
     }) {
-        return this.model.findById(id,projection,options)
+        return this.model.findById(id, projection, options)
     }
 
     async updateOne({
@@ -80,8 +92,29 @@ export abstract class DatabaseRepository
         update: UpdateQuery<TRawDocument>,
         options?: (mongodb.UpdateOptions & MongooseUpdateQueryOptions<TRawDocument>) | null
     }) {
-        return this.model.updateOne(filter, update, options)
+        const updateWithVersion = {
+            ...update,
+            $inc: { ...(update.$inc || {}), __v: 1 }
+        };
+        return this.model.updateOne(filter, updateWithVersion, options)
     }
 
+    async updateMany({
+        filter,
+        update,
+        options
+    }: {
+        filter: QueryFilter<TRawDocument>,
+        update: UpdateQuery<TRawDocument>,
+        options?: (mongodb.UpdateOptions & MongooseUpdateQueryOptions<TRawDocument>) | null
+    }): Promise<UpdateWriteOpResult> {
+
+        const updateWithVersion = {
+            ...update,
+            $inc: { ...(update.$inc || {}), __v: 1 }
+        };
+        
+        return this.model.updateMany(filter, updateWithVersion, options)
+    }
 
 }

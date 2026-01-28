@@ -4,6 +4,7 @@ interface ExceptionOptions {
   message?: string;
   issus?: { path?: string; info?: string }[];
   info?: string;
+  err?:any
 }
 
 export class ExceptionFactory {

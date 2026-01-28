@@ -47,16 +47,17 @@ export class AuthController {
 
   @Post('login')
   async login(
-    @Res({ passthrough: true }) res: Response,
-    @Body() body: SystemLoginDto
+    @Req() req: Request,
+    @Body() body: SystemLoginDto,
+    @Res({ passthrough: true }) res: Response
   ) {
 
-    const credentials = await this.authService.login(body, res);
+    const data = await this.authService.login(body, res,req);
 
     return SuccessResponse({
       message: 'Login successfully.',
       info: "User Credentials Saved In Cookies",
-      data: credentials
+      data
     });
 
   }
