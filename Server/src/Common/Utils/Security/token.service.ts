@@ -5,10 +5,12 @@ import { Types } from "mongoose";
 import { RoleEnum } from "src/Common/Enums/role.enum";
 import jwt, { JwtPayload, sign } from "jsonwebtoken"
 import { DeviceInfo } from 'src/Database/Models/jwt.model';
-import { generateHash } from './hash';
+import { compareHash, generateHash } from './hash';
 import { ExceptionFactory } from '../Response/error.response';
 import { I_User } from 'src/Common/Interfaces/user.interface';
 import { UserRepository } from 'src/Database/Repository/user.repository';
+import { SecurityLoggerService } from 'src/Common/Middlewares/security.logger.service';
+import { I_Session } from './client-info.service';
 
 
 const ErrorResponse = new ExceptionFactory();
@@ -34,7 +36,7 @@ interface I_SignToken {
 }
 
 export interface I_Decoded {
-    userId: string,
+    userId: Types.ObjectId,
     userRole: RoleEnum,
     iat: number,
     exp: number,
@@ -47,8 +49,7 @@ export class TokenService {
     constructor(
         private readonly jwtRepository: JwtRepository,
         private readonly userRepository: UserRepository,
-
-
+        private readonly securityLogger: SecurityLoggerService,
     ) {
 
     }
@@ -140,11 +141,7 @@ export class TokenService {
         jti: string,
         token: string,
         type: TokenTypeEnum,
-        session: {
-            deviceInfo: DeviceInfo,
-            ipAddress: string,
-            userAgent: string
-        }) {
+        session: I_Session) {
 
         const expiresAt = type === TokenTypeEnum.ACCESS ? new Date(Date.now() + 60 * 60 * 1000) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
@@ -164,17 +161,26 @@ export class TokenService {
 
     }
 
-
     private verifyToken = async (
         token: string,
         secretKey: string
     ): Promise<I_Decoded> => {
-
         return (jwt.verify(token, secretKey)) as I_Decoded;
-
-
     };
 
+    private async revokeAllTokensForUser(userId: Types.ObjectId) {
+
+        await this.jwtRepository.updateMany({
+            filter: {
+                userId
+            },
+            update: {
+                revoked: true,
+                revokedAt: new Date()
+            }
+        })
+
+    }
 
     async decodeToken(token: string, type: TokenTypeEnum, signature: SignatureLevelEnum) {
 
@@ -185,9 +191,7 @@ export class TokenService {
         try {
             decoded = await this.verifyToken(token, SECRET_KEY)
         } catch (error) {
-
             throw ErrorResponse.unauthorized({
-
                 message: "Fail To Decode Token",
                 info: error.message
             })
@@ -195,7 +199,12 @@ export class TokenService {
         }
 
 
-        const [jwt, user] = await Promise.all([
+        const [user, jwt] = await Promise.all([
+
+            this.userRepository.findById({
+                id: decoded.userId
+            }),
+
 
             this.jwtRepository.findOne({
                 filter: {
@@ -204,36 +213,115 @@ export class TokenService {
             }),
 
 
-            this.userRepository.findById({
-                id: decoded.userId
-            })
 
 
         ])
 
 
-        if (!jwt) {
-
-            throw ErrorResponse.notFound({
-                message: "Invalid Or Old Credentials",
-            })
-
-
-        }
-
-
         if (!user) {
 
-            throw ErrorResponse.notFound({
+            throw ErrorResponse.unauthorized({
                 message: "Fail To Find User",
             })
 
+        }
+
+
+        if (!jwt) {
+            throw ErrorResponse.unauthorized({
+                message: "Invalid Or Old Credentials",
+            })
+        }
+
+
+        if (jwt.type !== type) {
+            throw ErrorResponse.unauthorized({
+                message: "Invalid token type",
+            })
+        }
+
+
+        if (jwt.revoked) {
+
+            throw ErrorResponse.unauthorized({
+                message: "Session expired, please login again",
+            })
+
+        }
+
+        if (jwt.expiresAt < new Date()) {
+
+            if (jwt.type === TokenTypeEnum.REFRESH) {
+                throw ErrorResponse.unauthorized({
+                    message: "Refresh token expired, please login again",
+                })
+            }
+
+            throw ErrorResponse.unauthorized({
+                message: "Access token expired",
+            })
 
         }
 
 
-        return {decoded,user}
+        if (!await compareHash({
+            plainText: `${signature} ${token}`,
+            hashText: jwt.token
+        })) {
+
+            await this.revokeAllTokensForUser(user!._id);
+
+            this.securityLogger.warn(
+                'Refresh token reuse detected',
+                {
+                    userId: user._id,
+                    jti: jwt.jti,
+                    tokenType: jwt.type,
+                }
+            );
+
+
+            throw ErrorResponse.unauthorized({
+                message: "Session expired, please login again",
+            })
+
+        }
+
+
+
+
+        return { decoded, user }
 
     }
+
+
+    async createRefreshToken(
+        userId: Types.ObjectId,
+        userRole: RoleEnum,
+        signature: SignatureLevelEnum,
+        session: I_Session
+    ) {
+
+
+
+        const access_token = await this.signToken({
+            payload: {
+                userId,
+                userRole
+            },
+            tokenType: TokenTypeEnum.ACCESS,
+            signature
+        });
+
+
+        return {
+            token: `${signature} ${access_token.token}`,
+            jti: access_token.jti
+        }
+
+
+    }
+
+
 
 }

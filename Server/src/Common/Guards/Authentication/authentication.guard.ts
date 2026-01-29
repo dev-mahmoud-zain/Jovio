@@ -26,7 +26,7 @@ export class AuthenticationGuard implements CanActivate {
     const tokenType = this.reflector.getAllAndOverride<TokenTypeEnum>("tokenType", [
       context.getHandler(),
       context.getClass()
-    ]) || TokenTypeEnum.ACCESS
+    ]) ?? TokenTypeEnum.ACCESS
 
     switch (context.getType()) {
       case "http":

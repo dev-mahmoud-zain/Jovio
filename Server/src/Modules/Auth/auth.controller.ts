@@ -57,7 +57,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response
   ) {
 
-    const data = await this.authService.login(body, res,req);
+    const data = await this.authService.login(body, res, req);
 
     return SuccessResponse({
       message: 'Login successfully.',
@@ -68,14 +68,21 @@ export class AuthController {
   }
 
 
-  @SetMetadata("tokenType",TokenTypeEnum.REFRESH)
+  @SetMetadata("tokenType", TokenTypeEnum.REFRESH)
   @UseGuards(AuthenticationGuard)
   @Get('refresh-token')
   async refreshToken(
     @Req() req: I_Request,
+    @Res({ passthrough: true }) res: Response
+
   ) {
 
-    console.log(req.credentials)
+
+    await this.authService.refreshToken(
+      req.credentials.user!,
+      req.cookies.refresh_token,
+      req, res)
+
 
     return SuccessResponse({
       message: 'Authenticated successfully.',

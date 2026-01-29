@@ -1,8 +1,15 @@
 import { Injectable } from "@nestjs/common";
 import { Request } from "express";
 import { BrowserEnum, DeviceTypeEnum, I_DeviceInfo, OSEnum } from "src/Common/Interfaces/jwt.interface";
-import { DeviceInfo } from "src/Database/Models/jwt.model";
+
 import { UAParser } from "ua-parser-js";
+
+
+export interface I_Session {
+    deviceInfo: I_DeviceInfo,
+    ipAddress: string,
+    userAgent: string
+}
 
 @Injectable()
 export class ClientInfoService {
@@ -60,11 +67,7 @@ export class ClientInfoService {
         };
     }
 
-    getUserSessionContext(req: Request): {
-        deviceInfo:I_DeviceInfo,
-        ipAddress:string,
-        userAgent :string
-    } {
+    getUserSessionContext(req: Request): I_Session {
 
 
         const userAgent = req.headers["user-agent"] || "";

@@ -11,10 +11,14 @@ import { OtpService } from 'src/Common/Utils/Otp/otp.service';
 import { OtpTypeEnum } from 'src/Common/Types/otp.types';
 import { VerifyAccountDto } from './dto/verify.account.dto';
 import { SystemLoginDto } from './dto/login.dto';
-import { TokenService, TokenTypeEnum } from 'src/Common/Utils/Security/token.service';
+import { TokenService, TokenTypeEnum, SignatureLevelEnum } from 'src/Common/Utils/Security/token.service';
 import { Request, Response } from 'express';
 import { CookiesService } from 'src/Common/Utils/Cookies/cookies.service';
 import { UserStatusEnum } from 'src/Common/Enums/user.status.enum';
+import { I_Request } from 'src/Common/Interfaces/request.interface';
+import { Types } from 'mongoose';
+import { User } from 'src/Database/Models/user.model';
+import { I_User } from 'src/Common/Interfaces/user.interface';
 
 
 const ErrorResponse = new ExceptionFactory();
@@ -195,6 +199,22 @@ export class AuthService {
         }
 
         return { userId: user._id, email: user.email, role: user.role, fullName: user.fullName }
+
+    }
+
+    async refreshToken(user: I_User, refresh_token: string, req: I_Request, res: Response) {
+
+        const session = this.clientInfoService.getUserSessionContext(req);
+
+        const signature = refresh_token.split(" ")[0] === SignatureLevelEnum.BEARER ? SignatureLevelEnum.BEARER : SignatureLevelEnum.SYSTEM
+
+        const access_token = await this.tokenService.createRefreshToken(user._id as Types.ObjectId, user.role, signature, session)
+
+        this.cookiesService.setTokenToCookies(res, access_token.token, TokenTypeEnum.ACCESS);
+
+        await this.tokenService.saveJwt(user._id as Types.ObjectId, access_token.jti, access_token.token, TokenTypeEnum.ACCESS, session)
+
+        return access_token
 
     }
 
