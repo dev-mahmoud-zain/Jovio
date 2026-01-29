@@ -5,6 +5,8 @@ import {
   Post,
   Req,
   Res,
+  SetMetadata,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -14,6 +16,9 @@ import { VerifyAccountDto } from './dto/verify.account.dto';
 import { SystemLoginDto } from './dto/login.dto';
 import { SuccessResponse } from 'src/Common/Utils/Response/success.response';
 import type { Request, Response } from 'express';
+import { AuthenticationGuard } from 'src/Common/Guards/Authentication/authentication.guard';
+import { TokenTypeEnum } from 'src/Common/Utils/Security/token.service';
+import type { I_Request } from 'src/Common/Interfaces/request.interface';
 
 @UsePipes(
   new ValidationPipe({
@@ -62,14 +67,15 @@ export class AuthController {
 
   }
 
-  // تخلص بكرا بقى ان شاء الله
+
+  @SetMetadata("tokenType",TokenTypeEnum.REFRESH)
+  @UseGuards(AuthenticationGuard)
   @Get('refresh-token')
   async refreshToken(
-    @Req() req: Request,
+    @Req() req: I_Request,
   ) {
 
-    console.log(req.cookies)
-
+    console.log(req.credentials)
 
     return SuccessResponse({
       message: 'Authenticated successfully.',
