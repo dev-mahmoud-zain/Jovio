@@ -33,8 +33,64 @@ export class AuthService {
         private readonly cookiesService: CookiesService,
         private readonly jwtRepository: JwtRepository,
         private readonly clientInfoService: ClientInfoService
-
     ) { }
+
+
+    // ===> Private Method Used At Many Requests
+
+    private async setUserLogin(req: Request, res: Response, user: I_User) {
+
+        // Get User Session Context
+        const session = this.clientInfoService.getUserSessionContext(req);
+
+
+        // Create Tokens
+        const { access_token, refresh_token } = await this.tokenService.createLoginCredentials(user._id!, user.role);
+
+        // Send Tokens To User's Cookies
+        this.cookiesService.setTokenToCookies(res, access_token.token, TokenTypeEnum.ACCESS);
+        this.cookiesService.setTokenToCookies(res, refresh_token.token, TokenTypeEnum.REFRESH);
+
+
+        try {
+            await Promise.all([
+
+                // Save Jwt In Database
+                this.tokenService.saveJwt(user._id!, access_token.jti, access_token.token, TokenTypeEnum.ACCESS, session),
+
+                this.tokenService.saveJwt(user._id!, refresh_token.jti, refresh_token.token, TokenTypeEnum.REFRESH, session),
+
+                // Revoke Old Session Token In Database
+                this.jwtRepository.updateMany({
+                    filter: {
+                        jti: { $nin: [access_token.jti, refresh_token.jti] },
+                        userId: user._id,
+                        ipAddress: session.ipAddress,
+                        userAgent: session.userAgent,
+                        "deviceInfo.type": session.deviceInfo.type,
+                        "deviceInfo.os": session.deviceInfo.os,
+                        "deviceInfo.browser": session.deviceInfo.browser
+                    },
+                    update: {
+                        revoked: true,
+                        revokedAt: new Date()
+                    }
+                })
+
+
+            ]);
+        } catch (err) {
+            throw ErrorResponse.serverError({ message: 'Login failed , please try again', err });
+        }
+
+        return { userId: user._id, email: user.email, role: user.role, fullName: user.fullName };
+
+    }
+
+
+    // ==================================== Registration & Verification ====================================
+
+    // ===> Register A New Account
 
     async signup(body: SignupDto) {
 
@@ -80,7 +136,9 @@ export class AuthService {
 
     }
 
-    async verifyAccount(body: VerifyAccountDto) {
+    // ===> Verify Email For New Account
+
+    async verifyAccount(req: Request, res: Response, body: VerifyAccountDto) {
 
         const { email, otpCode } = body
 
@@ -107,8 +165,17 @@ export class AuthService {
         user.emailConfirmedAt = new Date;
         user.save()
 
+       return await this.setUserLogin(req, res, user);
+
+
 
     }
+
+
+
+    // ================================ Authentication & Session Management ================================
+
+    // ===> Login By [ Email And Password ]
 
     async login(body: SystemLoginDto, res: Response, req: Request) {
 
@@ -155,52 +222,15 @@ export class AuthService {
             })
         }
 
-        // Get User Session Context
-        const session = this.clientInfoService.getUserSessionContext(req);
+
+        return await this.setUserLogin(req, res, user);
 
 
-        // Create Tokens
-        const { access_token, refresh_token } = await this.tokenService.createLoginCredentials(user._id, user.role);
 
-        // Send Tokens To User's Cookies
-        this.cookiesService.setTokenToCookies(res, access_token.token, TokenTypeEnum.ACCESS);
-        this.cookiesService.setTokenToCookies(res, refresh_token.token, TokenTypeEnum.REFRESH);
-
-
-        try {
-            await Promise.all([
-
-                // Save Jwt In Database
-                this.tokenService.saveJwt(user._id, access_token.jti, access_token.token, TokenTypeEnum.ACCESS, session),
-
-                this.tokenService.saveJwt(user._id, refresh_token.jti, refresh_token.token, TokenTypeEnum.REFRESH, session),
-
-                // Revoke Old Session Token In Database
-                this.jwtRepository.updateMany({
-                    filter: {
-                        jti: { $nin: [access_token.jti, refresh_token.jti] },
-                        userId: user._id,
-                        ipAddress: session.ipAddress,
-                        userAgent: session.userAgent,
-                        "deviceInfo.type": session.deviceInfo.type,
-                        "deviceInfo.os": session.deviceInfo.os,
-                        "deviceInfo.browser": session.deviceInfo.browser
-                    },
-                    update: {
-                        revoked: true,
-                        revokedAt: new Date()
-                    }
-                })
-
-
-            ]);
-        } catch (err) {
-            throw ErrorResponse.serverError({ message: 'Login failed , please try again', err });
-        }
-
-        return { userId: user._id, email: user.email, role: user.role, fullName: user.fullName }
 
     }
+
+    // ===> Refresh Access Token
 
     async refreshToken(user: I_User, refresh_token: string, req: I_Request, res: Response) {
 
@@ -217,5 +247,12 @@ export class AuthService {
         return access_token
 
     }
+
+
+    // ======================================== Security & Recovery ========================================
+
+
+
+
 
 }

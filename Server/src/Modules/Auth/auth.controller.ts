@@ -13,7 +13,7 @@ import {
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { VerifyAccountDto } from './dto/verify.account.dto';
-import { SystemLoginDto } from './dto/login.dto';
+import { LoginWithGoogleDto, SystemLoginDto } from './dto/login.dto';
 import { SuccessResponse } from 'src/Common/Utils/Response/success.response';
 import type { Request, Response } from 'express';
 import { AuthenticationGuard } from 'src/Common/Guards/Authentication/authentication.guard';
@@ -30,25 +30,67 @@ import type { I_Request } from 'src/Common/Interfaces/request.interface';
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
+
+
+
+  // ==================================== Registration & Verification ====================================
+
+
+  // ===> Register A New Account
+
   @Post('sign-up')
   async signUp(@Body() body: SignupDto) {
     await this.authService.signup(body);
     return SuccessResponse({
-      message: 'Confirmation OTP sent to your email.'
+      message: 'Confirmation OTP sent to your email.',
+      statusCode: 201
     });
   }
 
+
+  // ===> Verify Email For New Account
+
   @Post('verify-account')
-  async verifyAccount(@Body() body: VerifyAccountDto) {
-    await this.authService.verifyAccount(body);
+  async verifyAccount(@Body() body: VerifyAccountDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response) {
+
+    const data = await this.authService.verifyAccount(req, res, body);
 
     // تاني login  المفروض ارجعله توكن عشان ميعملش ريكوست 
 
     return SuccessResponse({
-      message: 'Account Verified successfully.'
+      message: 'Account Verified successfully.',
+      info: "User Credentials Saved In Cookies",
+      data
     });
 
   }
+
+
+  // ===> Register / Login – Google
+
+  @Post("google")
+  async loginWithGoogle(
+    @Body() data: LoginWithGoogleDto
+  ) {
+
+
+
+
+    return SuccessResponse({
+      message: 'Logged In successfully.'
+    });
+
+
+  }
+
+
+
+
+  // ================================ Authentication & Session Management ================================
+
+  // ===> Login By [ Email And Password ]
 
   @Post('login')
   async login(
@@ -67,6 +109,8 @@ export class AuthController {
 
   }
 
+
+  // ===> Refresh Access Token
 
   @SetMetadata("tokenType", TokenTypeEnum.REFRESH)
   @UseGuards(AuthenticationGuard)
@@ -89,5 +133,10 @@ export class AuthController {
     });
 
   }
+
+
+  // ======================================== Security & Recovery ========================================
+
+
 
 }
