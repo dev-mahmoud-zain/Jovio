@@ -71,15 +71,18 @@ export class AuthController {
   // ===> Register / Login – Google
 
   @Post("google")
-  async loginWithGoogle(
-    @Body() data: LoginWithGoogleDto
+  async authWithGoogle(
+    @Req() req: Request,
+    @Body() data: LoginWithGoogleDto,
+    @Res({ passthrough: true }) res: Response
   ) {
 
-
-
+    const response = await this.authService.authWithGoogle(req, res, data.id_token)
 
     return SuccessResponse({
-      message: 'Logged In successfully.'
+      message: response.message,
+      info:response.info,
+      data:response.data
     });
 
 
@@ -99,12 +102,11 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response
   ) {
 
-    const data = await this.authService.login(body, res, req);
+    await this.authService.login(body, res, req);
 
     return SuccessResponse({
       message: 'Login successfully.',
       info: "User Credentials Saved In Cookies",
-      data
     });
 
   }

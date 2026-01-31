@@ -2,16 +2,13 @@ import { MongooseUpdateQueryOptions, PopulateOptions, ProjectionType, Types, Upd
 import { Model, HydratedDocument, CreateOptions, QueryFilter, QueryOptions } from "mongoose";
 
 import * as mongodb from "mongodb";
-import { QueryWithHelpers } from "mongoose";
+import {  Injectable } from "@nestjs/common";
 
-export abstract class DatabaseRepository
-    <
-        TRawDocument,
-        TDocument = HydratedDocument<TRawDocument>
-    > {
-
-
-    protected constructor(protected readonly model: Model<TRawDocument>) { }
+@Injectable()
+export abstract class DatabaseRepository<TRawDocument, TDocument = HydratedDocument<TRawDocument>> {
+    protected constructor(
+        protected readonly model: Model<TRawDocument>
+    ) { }
 
 
     async create({
@@ -68,7 +65,7 @@ export abstract class DatabaseRepository
         projection?: ProjectionType<TRawDocument>,
         options?: QueryOptions<TRawDocument> & mongodb.Abortable
     }) {
-      return  this.model.find(filter,projection,options)
+        return this.model.find(filter, projection, options)
     }
 
     async findById({
@@ -82,6 +79,9 @@ export abstract class DatabaseRepository
     }) {
         return this.model.findById(id, projection, options)
     }
+
+
+
 
     async updateOne({
         filter,
@@ -113,7 +113,7 @@ export abstract class DatabaseRepository
             ...update,
             $inc: { ...(update.$inc || {}), __v: 1 }
         };
-        
+
         return this.model.updateMany(filter, updateWithVersion, options)
     }
 

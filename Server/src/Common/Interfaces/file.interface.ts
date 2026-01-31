@@ -1,4 +1,4 @@
 export interface I_File {
-    url: string;
+    url?: string;
     public_id?: string;
 }

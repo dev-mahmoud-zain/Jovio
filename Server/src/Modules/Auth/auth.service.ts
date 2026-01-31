@@ -10,7 +10,7 @@ import { EncryptionService } from 'src/Common/Utils/Security/encryption';
 import { OtpService } from 'src/Common/Utils/Otp/otp.service';
 import { OtpTypeEnum } from 'src/Common/Types/otp.types';
 import { VerifyAccountDto } from './dto/verify.account.dto';
-import { SystemLoginDto } from './dto/login.dto';
+import { LoginWithGoogleDto, SystemLoginDto } from './dto/login.dto';
 import { TokenService, TokenTypeEnum, SignatureLevelEnum } from 'src/Common/Utils/Security/token.service';
 import { Request, Response } from 'express';
 import { CookiesService } from 'src/Common/Utils/Cookies/cookies.service';
@@ -19,6 +19,9 @@ import { I_Request } from 'src/Common/Interfaces/request.interface';
 import { Types } from 'mongoose';
 import { User } from 'src/Database/Models/user.model';
 import { I_User } from 'src/Common/Interfaces/user.interface';
+import { OAuth2Client, TokenPayload } from 'google-auth-library';
+import { ProviderEnum } from 'src/Common/Enums/provider.enum';
+import { RoleEnum } from 'src/Common/Enums/role.enum';
 
 
 const ErrorResponse = new ExceptionFactory();
@@ -84,6 +87,62 @@ export class AuthService {
         }
 
         return { userId: user._id, email: user.email, role: user.role, fullName: user.fullName };
+
+    }
+
+    private verifyGmailAccount = async (
+        id_token: string
+    ): Promise<TokenPayload> => {
+
+        try {
+
+            const client = new OAuth2Client();
+
+            let ticket = await client.verifyIdToken({
+                idToken: id_token,
+                audience: process.env.WEB_CLIENT_ID as string,
+            });
+
+            const payload = ticket.getPayload();
+
+            if (!payload?.email_verified) {
+                throw ErrorResponse.badRequest({
+                    message: "Fail To Verify This Account"
+                })
+            }
+
+            return payload;
+
+
+        } catch (error) {
+            throw ErrorResponse.badRequest(error)
+        }
+
+
+    };
+
+    private signupWithGmail = async (email: string, fullName: string, picture?: string) => {
+
+        const [user] = await this.userRepository.create({
+            data: [{
+                fullName,
+                email: this.encryptionService.encrypt(email),
+                profilePicture: {
+                    url: picture || undefined,
+                    public_id: undefined
+                },
+                provider: ProviderEnum.GOOGLE
+            }]
+        }) || []
+
+
+        if (!user) {
+            throw ErrorResponse.serverError({
+                message: "Fail To Sign-up Please Retry Another Time"
+            })
+        }
+
+        return user;
 
     }
 
@@ -165,12 +224,48 @@ export class AuthService {
         user.emailConfirmedAt = new Date;
         user.save()
 
-       return await this.setUserLogin(req, res, user);
+        return await this.setUserLogin(req, res, user);
 
 
 
     }
 
+
+    // ===> Verify Email For New Account
+
+    async authWithGoogle(req: Request, res: Response, id_token: string) {
+
+        const { email, name, picture } = await this.verifyGmailAccount(id_token)
+
+        const user = await this.userRepository.findByEmail({ email: email as string })
+
+
+        if (!user) {
+
+            const newUser = await this.signupWithGmail(email!, name!, picture)
+
+            const data = await this.setUserLogin(req, res, newUser);
+
+            return {
+                message: "Signed Up Successfully",
+                info: "User Credentials Saved In Cookies",
+                data
+            }
+
+        }
+        else {
+            const data = await this.setUserLogin(req, res, user)
+
+            return {
+                message: "Login Successfully",
+                info: "User Credentials Saved In Cookies",
+                data
+            }
+
+        }
+
+
+    }
 
 
     // ================================ Authentication & Session Management ================================

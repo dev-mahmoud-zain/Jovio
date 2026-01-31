@@ -14,6 +14,8 @@ export class EncryptionService {
       throw new Error('CRYPTO_KEY is missing in environment variables');
     }
     this.KEY = crypto.scryptSync(CRYPTO_KEY, 'salt', 32);
+
+  
   }
 
   encrypt(text: string): string {
@@ -23,6 +25,10 @@ export class EncryptionService {
 
   decrypt(cipherText: string): string {
     const decipher = crypto.createDecipheriv(this.ALGORITHM, this.KEY, this.IV);
+
+
+    console.log()
+
     return Buffer.concat([
       decipher.update(Buffer.from(cipherText, 'hex')),
       decipher.final()

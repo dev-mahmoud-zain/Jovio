@@ -1,7 +1,7 @@
 import { InjectModel } from "@nestjs/mongoose";
 import { DatabaseRepository } from "./base.repository";
 import { H_UserDocument, User } from "../Models/user.model";
-import { Model, Types } from "mongoose";
+import { Model, QueryOptions, Types } from "mongoose";
 import { ExceptionFactory } from "src/Common/Utils/Response/error.response";
 import { EncryptionService } from "src/Common/Utils/Security/encryption";
 
@@ -37,7 +37,7 @@ export class UserRepository extends DatabaseRepository<User> {
         }))
       }
     });
-    
+
 
     if (throwError && userExists) {
 
@@ -64,5 +64,26 @@ export class UserRepository extends DatabaseRepository<User> {
 
   }
 
+  async findByEmail({
+    email,
+    select,
+    options,
+    getFreezed
+  }: {
+    email: string,
+    select?: string | readonly string[] | Record<string, number | boolean | string | object>,
+    options?: QueryOptions<User>,
+    getFreezed?: boolean
+  }) {
+
+
+    return this.findOne({
+      filter: {
+        email: this.encryptionService.encrypt(email)
+      }
+      , select, options, getFreezed
+    })
+
+  }
 
 }
