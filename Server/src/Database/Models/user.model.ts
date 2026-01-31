@@ -116,14 +116,14 @@ export class User implements I_User {
 
     @Prop({
         type: String,
-        required: true,
+        required: function(this: User) { return this.provider === ProviderEnum.SYSTEM; },
         enum: GenderEnum
     })
     gender: GenderEnum;
 
     @Prop({
         type: String,
-        required: true
+        required: function(this: User) { return this.provider === ProviderEnum.SYSTEM; },
     })
     dateOfBirth: string;
 

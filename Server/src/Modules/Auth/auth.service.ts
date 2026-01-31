@@ -113,7 +113,6 @@ export class AuthService {
 
             return payload;
 
-
         } catch (error) {
             throw ErrorResponse.badRequest(error)
         }
@@ -238,6 +237,8 @@ export class AuthService {
         const { email, name, picture } = await this.verifyGmailAccount(id_token)
 
         const user = await this.userRepository.findByEmail({ email: email as string })
+
+        
 
 
         if (!user) {
