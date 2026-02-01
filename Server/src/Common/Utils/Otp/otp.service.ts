@@ -35,6 +35,8 @@ export class OtpService {
         email: string,
         type: OtpTypeEnum,
     }) {
+
+
         const plainOtp = this.generateCode();
 
         if (! await this.otpRepository.create({
@@ -62,12 +64,12 @@ export class OtpService {
 
                 break;
 
-            case OtpTypeEnum.CONFIRM_EMAIL:
+            case OtpTypeEnum.FORGET_PASSWORD:
 
-                /*                 this.emailService.verifyAccount({
-                                    email,
-                                    OTPCode: plainOtp
-                                }) */
+                this.emailService.forgetPassword({
+                    email,
+                    OTPCode: plainOtp
+                })
 
                 break;
 
@@ -138,8 +140,5 @@ export class OtpService {
         return true;
 
     }
-
-    
-
 
 }

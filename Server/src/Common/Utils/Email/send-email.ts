@@ -1,8 +1,8 @@
 import nodemailer, { Transporter } from 'nodemailer';
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
-import { verifyAccountTemplate } from './email.templates';
+import { forgetPasswordTemplate, verifyAccountTemplate } from './email.templates';
 import { EmailSubjectEnum } from './email.subjects';
 
 @Injectable()
@@ -60,5 +60,22 @@ export class EmailService {
             html
         })
     }
+
+    async forgetPassword({
+        email,
+        OTPCode
+    }: {
+        email: string,
+        OTPCode: string
+    }) {
+        const html = await forgetPasswordTemplate({ OTPCode })
+        this.sendEmail({
+            to: email,
+            subject: EmailSubjectEnum.FORGET_PASSWORD,
+            html
+        })
+    }
+
+    
 
 }

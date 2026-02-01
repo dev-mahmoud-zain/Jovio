@@ -142,6 +142,50 @@ export class AuthService {
 
     }
 
+    private async validateAccount(user: I_User, password?: string) {
+
+
+
+        // Check If Account Confirmed
+        if (!user.emailConfirmedAt && user.provider === ProviderEnum.SYSTEM) {
+            throw ErrorResponse.badRequest({
+                message: "Please Verify Your Account First"
+            })
+        }
+
+        // Check If User Banned
+        if (user.bannedAt) {
+            throw ErrorResponse.forbidden({
+                message: "Your account has been banned",
+                info: user.bannedReason
+            });
+        }
+
+        // Compare Password With Hashed 
+        if (password) {
+
+            if (user!.provider === ProviderEnum.GOOGLE || !user!.password) {
+                throw ErrorResponse.badRequest({
+                    message: "You Have No Password , Try Login Using Google Account"
+                })
+            }
+
+
+            if (user.provider === ProviderEnum.SYSTEM && !compareHash({
+                plainText: password,
+                hashText: user.password
+            })) {
+                throw ErrorResponse.unauthorized({
+                    message: "Invalid Login Data"
+                })
+            }
+
+        }
+
+
+
+    }
+
 
     // ==================================== Registration & Verification ====================================
 
@@ -265,7 +309,6 @@ export class AuthService {
 
     }
 
-
     // ================================ Authentication & Session Management ================================
 
     // ===> Login By [ Email And Password ]
@@ -282,39 +325,14 @@ export class AuthService {
             throwError: false
         });
 
-        const message: string = "Invalid Login Data";
-
         if (!user) {
             throw ErrorResponse.unauthorized({
-                message
+                message: "Invalid Login Data"
             })
         }
 
-        // Check If Account Confirmed
-        if (!user.emailConfirmedAt && user.provider === ProviderEnum.SYSTEM) {
-            throw ErrorResponse.badRequest({
-                message: "Please Verify Your Account To Login"
-            })
-        }
 
-        // Check If User Banned
-        if (user.bannedAt) {
-            throw ErrorResponse.forbidden({
-                message: "Your account has been banned",
-                info: user.bannedReason
-            });
-        }
-
-        // Compare Password With Hashed 
-        if (user.provider === ProviderEnum.SYSTEM && !compareHash({
-            plainText: body.password,
-            hashText: user.password
-        })) {
-            throw ErrorResponse.unauthorized({
-                message
-            })
-        }
-
+        await this.validateAccount(user, body.password)
 
         return await this.setUserLogin(req, res, user);
 
@@ -339,8 +357,6 @@ export class AuthService {
 
         return access_token
     }
-
-
 
     // ===> Logout
 
@@ -368,4 +384,52 @@ export class AuthService {
     }
 
     // ======================================== Security & Recovery ========================================
+
+    // ===> Request Password Reset
+
+    async forgetPassword(email: string) {
+
+        const user = await this.userRepository.findByEmail({
+            email
+        });
+
+        await this.validateAccount(user!)
+
+        await this.otpService.sendOtpToEmail({
+            userId: user!._id,
+            email,
+            type: OtpTypeEnum.FORGET_PASSWORD
+        });
+
+
+
+    }
+
+    // ===> Request Password Reset
+
+    async confirmResetPassword( req: Request, res: Response ,otpCode: string, email: string, password: string) {
+
+        const user = await this.userRepository.findByEmail({
+            email
+        });
+
+        await this.validateAccount(user!)
+
+        await this.otpService.verifyOtp({
+            userId:user!._id,
+            otpCode,
+            type:OtpTypeEnum.FORGET_PASSWORD
+        });
+
+        user!.password = await generateHash({
+            text:password
+        });
+
+        await user!.save()
+
+       return await this.login({email,password},res,req)
+
+    }
+
+
 }

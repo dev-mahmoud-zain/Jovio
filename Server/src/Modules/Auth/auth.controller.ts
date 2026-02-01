@@ -19,6 +19,7 @@ import type { Request, Response } from 'express';
 import { AuthenticationGuard } from 'src/Common/Guards/Authentication/authentication.guard';
 import { TokenTypeEnum } from 'src/Common/Utils/Security/token.service';
 import type { I_Request } from 'src/Common/Interfaces/request.interface';
+import { ConfirmResetPasswordDto, ForgetPasswordDto } from './dto/forget.password.otp';
 
 @UsePipes(
   new ValidationPipe({
@@ -42,7 +43,7 @@ export class AuthController {
   async signUp(@Body() body: SignupDto) {
     await this.authService.signup(body);
     return SuccessResponse({
-      message:"Signup Successfully",
+      message: "Signup Successfully",
       info: 'Confirmation OTP sent to your email.',
       statusCode: 201
     });
@@ -139,7 +140,7 @@ export class AuthController {
 
 
   // ===> Logout
-  
+
   @UseGuards(AuthenticationGuard)
   @Post('logout')
   async logout(
@@ -147,10 +148,11 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response
   ) {
 
-    await this.authService.logout(req,res);
+    await this.authService.logout(req, res);
 
     return SuccessResponse({
       message: 'logout successfully.',
+
     });
 
   }
@@ -158,6 +160,39 @@ export class AuthController {
 
   // ======================================== Security & Recovery ========================================
 
+  // ===> Forget Password
+
+  @Post('forget-password')
+  async forgetPassword(
+    @Body() body: ForgetPasswordDto
+  ) {
+
+
+    await this.authService.forgetPassword(body.email);
+
+    return SuccessResponse({
+      message: 'Requested successfully.',
+      info: 'Reset OTP sent to your email.',
+    });
+
+  }
+
+  // ===> Confirm Reset Password
+  @Post('confirm-reset-password')
+  async confirmResetPassword(
+    @Req() req: I_Request,
+    @Res({ passthrough: true }) res: Response,
+    @Body() body: ConfirmResetPasswordDto
+  ) {
+
+    await this.authService.confirmResetPassword(req, res, body.otpCode, body.email, body.password);
+
+    return SuccessResponse({
+      message: 'Password Reset successfully.',
+      info: "User Credentials Saved In Cookies",
+    });
+
+  }
 
 
 }
