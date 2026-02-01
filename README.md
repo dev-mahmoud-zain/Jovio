@@ -107,12 +107,14 @@ Environment example files (`.env.example`) are provided to guide setup.
 - Hossam Ahmed
 
 ### Frontend Developers
-- 
-- 
-
+- Rana Habashy
+- Ahmed Adel
+- Nader elsayed
+- Ahmed Salama
 ### UI/UX Designer
-- 
-
+- Hadeer Mamdoh
+- Rehab Hussin
+- Menna 
 ---
 
 ## 🛠️ Development Principles
