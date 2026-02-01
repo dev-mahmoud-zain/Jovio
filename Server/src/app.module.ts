@@ -1,11 +1,24 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  OnModuleInit,
+} from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { InjectConnection, MongooseModule } from '@nestjs/mongoose';
+import { CommonModule } from './Common/Common-Modules/common.module';
+import { LoggerMiddleware } from './Common/Middlewares/logging.middlewares';
+import { AuthModule } from './Modules/Auth/auth.module';
 
 @Module({
   imports: [
+    
+    CommonModule,
+    AuthModule,
+
     ConfigModule.forRoot({
       envFilePath: '.env',
       isGlobal: true,
@@ -17,19 +30,22 @@ import { InjectConnection, MongooseModule } from '@nestjs/mongoose';
       }),
       inject: [ConfigService],
     }),
+
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule implements OnModuleInit {
-  constructor(@InjectConnection () private readonly connection) {}
-  
+export class AppModule implements OnModuleInit, NestModule {
+  constructor(@InjectConnection() private readonly connection) { }
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
   async onModuleInit() {
     try {
       await this.connection.db.admin().ping();
       console.log('🟢 DateBase Connected Successfully');
     } catch (error) {
-       console.log('🔴 DateBase Not Connected');
+      console.log('🔴 DateBase Not Connected');
     }
   }
 }
