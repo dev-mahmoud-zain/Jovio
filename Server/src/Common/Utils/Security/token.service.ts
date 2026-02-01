@@ -54,10 +54,11 @@ export class TokenService {
 
     }
 
+    private detectSignatureFromToken(token: string) {
+        return token.split(" ")[0] === SignatureLevelEnum.BEARER ? SignatureLevelEnum.BEARER : SignatureLevelEnum.SYSTEM;
+    };
+
     private getSecretKey(signature: SignatureLevelEnum, tokenType: TokenTypeEnum): string {
-
-
-
 
         const isUser = signature === SignatureLevelEnum.BEARER;
 
@@ -78,7 +79,7 @@ export class TokenService {
         }
 
         return key;
-    }
+    };
 
     private async signToken(data: I_SignToken) {
 
@@ -98,7 +99,7 @@ export class TokenService {
         }
 
 
-    }
+    };
 
     async createLoginCredentials(userId: Types.ObjectId | string,
         userRole: RoleEnum) {
@@ -135,7 +136,7 @@ export class TokenService {
             }
         }
 
-    }
+    };
 
     async saveJwt(userId: Types.ObjectId,
         jti: string,
@@ -159,7 +160,7 @@ export class TokenService {
         })
 
 
-    }
+    };
 
     private verifyToken = async (
         token: string,
@@ -180,7 +181,7 @@ export class TokenService {
             }
         })
 
-    }
+    };
 
     async decodeToken(token: string, type: TokenTypeEnum, signature: SignatureLevelEnum) {
 
@@ -188,9 +189,15 @@ export class TokenService {
 
         let decoded: I_Decoded;
 
+        if (token.startsWith("Bearer") || token.startsWith("Bearer")) {
+            token = token.split(" ")[1]
+        }
+
         try {
             decoded = await this.verifyToken(token, SECRET_KEY)
         } catch (error) {
+
+
             throw ErrorResponse.unauthorized({
                 message: "Fail To Decode Token",
                 info: error.message
@@ -292,14 +299,12 @@ export class TokenService {
 
         return { decoded, user }
 
-    }
-
+    };
 
     async createRefreshToken(
         userId: Types.ObjectId,
         userRole: RoleEnum,
         signature: SignatureLevelEnum,
-        session: I_Session
     ) {
 
 
@@ -320,8 +325,34 @@ export class TokenService {
         }
 
 
-    }
+    };
 
+    async revokeToken(token: string, type: TokenTypeEnum) {
+
+        const signature = this.detectSignatureFromToken(token);
+
+        const { decoded } = await this.decodeToken(token, type, signature);
+
+        const jwt = await this.jwtRepository.updateOne({
+            filter: {
+                jti: decoded.jti
+            },
+            update: {
+                revoked: true,
+                revokedAt:new Date()
+            }
+        })
+
+        if (!jwt.modifiedCount) {
+            throw ErrorResponse.serverError({
+                message: "Fail To Revoke Token"
+            })
+        }
+
+
+
+
+    };
 
 
 }

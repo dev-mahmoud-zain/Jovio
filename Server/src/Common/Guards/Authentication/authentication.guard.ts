@@ -31,8 +31,15 @@ export class AuthenticationGuard implements CanActivate {
     switch (context.getType()) {
       case "http":
 
-
         req = context.switchToHttp().getRequest() as I_Request;
+
+        if (tokenType === TokenTypeEnum.REFRESH && !req.cookies.refresh_token
+          || tokenType === TokenTypeEnum.ACCESS && !req.cookies.access_token) {
+          throw ErrorResponse.unauthorized({
+            message: "Missing Authorization Token"
+          })
+        }
+
 
         if (tokenType === TokenTypeEnum.REFRESH) {
           auth = req.cookies.refresh_token.split(" ");

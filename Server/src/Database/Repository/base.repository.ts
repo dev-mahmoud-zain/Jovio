@@ -1,8 +1,8 @@
-import { MongooseUpdateQueryOptions, PopulateOptions, ProjectionType, Types, UpdateQuery, UpdateWriteOpResult } from "mongoose";
+import { MongooseBaseQueryOptions, MongooseUpdateQueryOptions, PopulateOptions, ProjectionType, Types, UpdateQuery, UpdateWriteOpResult } from "mongoose";
 import { Model, HydratedDocument, CreateOptions, QueryFilter, QueryOptions } from "mongoose";
 
 import * as mongodb from "mongodb";
-import {  Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export abstract class DatabaseRepository<TRawDocument, TDocument = HydratedDocument<TRawDocument>> {
@@ -80,9 +80,6 @@ export abstract class DatabaseRepository<TRawDocument, TDocument = HydratedDocum
         return this.model.findById(id, projection, options)
     }
 
-
-
-
     async updateOne({
         filter,
         update,
@@ -115,6 +112,18 @@ export abstract class DatabaseRepository<TRawDocument, TDocument = HydratedDocum
         };
 
         return this.model.updateMany(filter, updateWithVersion, options)
+    }
+
+    async deleteOne({
+        filter,
+        options
+    }: {
+        filter: QueryFilter<TRawDocument>,
+        options?: (mongodb.DeleteOptions & MongooseBaseQueryOptions<TRawDocument>)
+    }) {
+
+        return await this.model.deleteOne(filter,options);
+
     }
 
 }

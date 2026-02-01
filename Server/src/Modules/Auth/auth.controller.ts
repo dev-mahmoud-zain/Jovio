@@ -81,8 +81,8 @@ export class AuthController {
 
     return SuccessResponse({
       message: response.message,
-      info:response.info,
-      data:response.data
+      info: response.info,
+      data: response.data
     });
 
 
@@ -132,6 +132,24 @@ export class AuthController {
 
     return SuccessResponse({
       message: 'Authenticated successfully.',
+    });
+
+  }
+
+
+  // ===> Logout
+  
+  @UseGuards(AuthenticationGuard)
+  @Post('logout')
+  async logout(
+    @Req() req: I_Request,
+    @Res({ passthrough: true }) res: Response
+  ) {
+
+    await this.authService.logout(req,res);
+
+    return SuccessResponse({
+      message: 'logout successfully.',
     });
 
   }

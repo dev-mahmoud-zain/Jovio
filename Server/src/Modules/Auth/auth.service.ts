@@ -1,3 +1,4 @@
+import { ProviderEnum } from 'src/Common/Enums/provider.enum';
 import { ClientInfoService } from './../../Common/Utils/Security/client-info.service';
 import { JwtRepository } from './../../Database/Repository/jwt.repository';
 import { _default } from './../../../node_modules/@types/validator/index.d';
@@ -10,18 +11,14 @@ import { EncryptionService } from 'src/Common/Utils/Security/encryption';
 import { OtpService } from 'src/Common/Utils/Otp/otp.service';
 import { OtpTypeEnum } from 'src/Common/Types/otp.types';
 import { VerifyAccountDto } from './dto/verify.account.dto';
-import { LoginWithGoogleDto, SystemLoginDto } from './dto/login.dto';
+import { SystemLoginDto } from './dto/login.dto';
 import { TokenService, TokenTypeEnum, SignatureLevelEnum } from 'src/Common/Utils/Security/token.service';
 import { Request, Response } from 'express';
 import { CookiesService } from 'src/Common/Utils/Cookies/cookies.service';
-import { UserStatusEnum } from 'src/Common/Enums/user.status.enum';
 import { I_Request } from 'src/Common/Interfaces/request.interface';
 import { Types } from 'mongoose';
-import { User } from 'src/Database/Models/user.model';
 import { I_User } from 'src/Common/Interfaces/user.interface';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
-import { ProviderEnum } from 'src/Common/Enums/provider.enum';
-import { RoleEnum } from 'src/Common/Enums/role.enum';
 
 
 const ErrorResponse = new ExceptionFactory();
@@ -238,7 +235,7 @@ export class AuthService {
 
         const user = await this.userRepository.findByEmail({ email: email as string })
 
-        
+
 
 
         if (!user) {
@@ -294,7 +291,7 @@ export class AuthService {
         }
 
         // Check If Account Confirmed
-        if (user && !user.emailConfirmedAt) {
+        if (!user.emailConfirmedAt && user.provider === ProviderEnum.SYSTEM) {
             throw ErrorResponse.badRequest({
                 message: "Please Verify Your Account To Login"
             })
@@ -309,7 +306,7 @@ export class AuthService {
         }
 
         // Compare Password With Hashed 
-        if (!compareHash({
+        if (user.provider === ProviderEnum.SYSTEM && !compareHash({
             plainText: body.password,
             hashText: user.password
         })) {
@@ -334,7 +331,7 @@ export class AuthService {
 
         const signature = refresh_token.split(" ")[0] === SignatureLevelEnum.BEARER ? SignatureLevelEnum.BEARER : SignatureLevelEnum.SYSTEM
 
-        const access_token = await this.tokenService.createRefreshToken(user._id as Types.ObjectId, user.role, signature, session)
+        const access_token = await this.tokenService.createRefreshToken(user._id as Types.ObjectId, user.role, signature)
 
         this.cookiesService.setTokenToCookies(res, access_token.token, TokenTypeEnum.ACCESS);
 
@@ -345,10 +342,40 @@ export class AuthService {
     }
 
 
+
+    // ===> Logout
+
+    async logout(req: I_Request, res: Response) {
+
+        try {
+
+            await Promise.all([
+                this.tokenService.revokeToken(req.cookies["access_token"], TokenTypeEnum.ACCESS),
+
+                this.tokenService.revokeToken(req.cookies["refresh_token"], TokenTypeEnum.REFRESH),
+            ]);
+
+
+            this.cookiesService.removeTokenFromCookies(res, TokenTypeEnum.ACCESS);
+
+            this.cookiesService.removeTokenFromCookies(res, TokenTypeEnum.REFRESH);
+
+
+        } catch (error) {
+
+            throw ErrorResponse.serverError({
+                message: "Fail To Logout Please Try Again",
+            });
+        }
+
+
+
+
+
+    }
+
+
+
     // ======================================== Security & Recovery ========================================
-
-
-
-
 
 }
