@@ -171,17 +171,22 @@ export class AuthService {
             }
 
 
-            if (user.provider === ProviderEnum.SYSTEM && !compareHash({
+            if (user.provider === ProviderEnum.SYSTEM && ! await compareHash({
                 plainText: password,
                 hashText: user.password
             })) {
+
                 throw ErrorResponse.unauthorized({
                     message: "Invalid Login Data"
                 })
+
+
             }
 
         }
 
+
+        return true
 
 
     }
@@ -333,6 +338,7 @@ export class AuthService {
 
 
         await this.validateAccount(user, body.password)
+
 
         return await this.setUserLogin(req, res, user);
 
