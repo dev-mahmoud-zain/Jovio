@@ -35,6 +35,7 @@ export class CookiesService {
             httpOnly: true,
             secure: true,
             sameSite: "lax",
+            path: isAccess ? "/" : "/api/auth"
         });
     }
 

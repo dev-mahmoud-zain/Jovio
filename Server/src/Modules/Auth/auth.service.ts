@@ -338,7 +338,6 @@ export class AuthService {
         await this.tokenService.saveJwt(user._id as Types.ObjectId, access_token.jti, access_token.token, TokenTypeEnum.ACCESS, session)
 
         return access_token
-
     }
 
 
@@ -346,6 +345,8 @@ export class AuthService {
     // ===> Logout
 
     async logout(req: I_Request, res: Response) {
+
+
 
         try {
 
