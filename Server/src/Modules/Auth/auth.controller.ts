@@ -42,7 +42,8 @@ export class AuthController {
   async signUp(@Body() body: SignupDto) {
     await this.authService.signup(body);
     return SuccessResponse({
-      message: 'Confirmation OTP sent to your email.',
+      message:"Signup Successfully",
+      info: 'Confirmation OTP sent to your email.',
       statusCode: 201
     });
   }

@@ -345,9 +345,6 @@ export class AuthService {
     // ===> Logout
 
     async logout(req: I_Request, res: Response) {
-
-
-
         try {
 
             await Promise.all([
@@ -368,15 +365,7 @@ export class AuthService {
                 message: "Fail To Logout Please Try Again",
             });
         }
-
-
-
-
-
     }
 
-
-
     // ======================================== Security & Recovery ========================================
-
 }

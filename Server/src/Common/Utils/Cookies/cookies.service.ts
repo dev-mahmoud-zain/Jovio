@@ -19,7 +19,6 @@ export class CookiesService {
             secure: true,
             sameSite: "lax",
             maxAge,
-            path: isAccess ? "/" : "/api/auth"
         })
 
     }
@@ -35,7 +34,6 @@ export class CookiesService {
             httpOnly: true,
             secure: true,
             sameSite: "lax",
-            path: isAccess ? "/" : "/api/auth"
         });
     }
 
