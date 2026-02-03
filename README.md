@@ -109,12 +109,12 @@ Environment example files (`.env.example`) are provided to guide setup.
 ### Frontend Developers
 - Rana Habashy
 - Ahmed Adel
-- Nader elsayed
+- Nader Elsayed
 - Ahmed Salama
 ### UI/UX Designer
 - Hadeer Mamdoh
 - Rehab Hussin
-- Menna 
+- Nermeen Abeid 
 ---
 
 ## 🛠️ Development Principles
