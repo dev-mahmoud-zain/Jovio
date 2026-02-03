@@ -335,11 +335,12 @@ export class TokenService {
 
         const jwt = await this.jwtRepository.updateOne({
             filter: {
-                jti: decoded.jti
+                jti: decoded.jti,
+                revoked: false,
             },
             update: {
                 revoked: true,
-                revokedAt:new Date()
+                revokedAt: new Date()
             }
         })
 
@@ -349,10 +350,61 @@ export class TokenService {
             })
         }
 
-
-
-
     };
 
+    async getSessions(userId: Types.ObjectId) {
+
+        return await this.jwtRepository.find({
+            filter: {
+                userId,
+                revoked: false,
+                type: TokenTypeEnum.REFRESH
+            },
+            projection: {
+                deviceInfo: 1,
+                ipAddress: 1,
+                userAgent: 1,
+                jti: 1
+            },
+            options: {
+                lean: true
+            }
+        });
+
+
+
+    }
+
+    async revokeSession(sessionId: Types.ObjectId, currentJti: string): Promise<"eq" | "ne"> {
+
+
+        const jwt = await this.jwtRepository.findOne({
+            filter: {
+                _id: sessionId,
+                revoked: false
+            }
+        })
+
+
+        if (!jwt) {
+            throw ErrorResponse.badRequest({
+                message: "Not Active Session With This Id: " + sessionId
+            })
+        }
+
+
+        jwt.revoked = true;
+        jwt.revokedAt = new Date();
+
+        await jwt.save();
+
+        if (jwt.jti === currentJti) {
+            return "eq"
+        }
+        else {
+            return "ne"
+        }
+
+    }
 
 }

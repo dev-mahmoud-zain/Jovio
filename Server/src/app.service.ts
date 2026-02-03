@@ -4,8 +4,6 @@ import { Injectable } from '@nestjs/common';
 export class AppService {
   mainRoute() {
 
-
-
     return {
 
       project_metadata: {
@@ -54,12 +52,15 @@ export class AppService {
           "Hossam Ahmed"
         ],
         frontend_engineering: [
-          "Ahmed Salama",
-          "Ahmed Adel"
+          "Rana Habashy",
+          "Ahmed Adel",
+          "Nader Elsayed",
+          "Ahmed Salama"
         ],
         ui_ux_design: [
           "Hadder Mamdouh",
-          "Rehab Hussin"
+          "Rehab Hussin",
+          "Nermeen Abeid"
         ]
       },
 

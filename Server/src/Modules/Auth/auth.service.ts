@@ -19,12 +19,14 @@ import { I_Request } from 'src/Common/Interfaces/request.interface';
 import { Types } from 'mongoose';
 import { I_User } from 'src/Common/Interfaces/user.interface';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
+import { I_Jwt } from 'src/Common/Interfaces/jwt.interface';
 
 
 const ErrorResponse = new ExceptionFactory();
 
 @Injectable()
 export class AuthService {
+
     constructor(
         private readonly userRepository: UserRepository,
         private readonly encryptionService: EncryptionService,
@@ -389,6 +391,49 @@ export class AuthService {
         }
     }
 
+
+    async getSessions(userId: Types.ObjectId, currentJti: string) {
+
+        const sessions = await this.tokenService.getSessions(userId);
+
+        const currentSession = sessions.find(
+            session => session.jti === currentJti
+        ) || null;
+
+        const otherSessions = sessions.filter(
+            session => session.jti !== currentJti
+        );
+
+        return {
+            currentSession,
+            otherSessions,
+            count: {
+                total: sessions.length,
+                others: otherSessions.length
+            }
+        };
+
+    }
+
+    // ===> Revoke Sessions
+
+
+    async revokeSession(sessionId: Types.ObjectId, currentJti: string,res:Response) {
+
+        const result = await this.tokenService.revokeSession(sessionId, currentJti);
+
+        if (result === "eq") {
+            this.cookiesService.removeTokenFromCookies(res, TokenTypeEnum.ACCESS);
+
+            this.cookiesService.removeTokenFromCookies(res, TokenTypeEnum.REFRESH);
+
+            return "Logout Success"
+        }
+
+        return "Session Revoked Success"
+    }
+
+
     // ======================================== Security & Recovery ========================================
 
     // ===> Request Password Reset
@@ -413,7 +458,7 @@ export class AuthService {
 
     // ===> Request Password Reset
 
-    async confirmResetPassword( req: Request, res: Response ,otpCode: string, email: string, password: string) {
+    async confirmResetPassword(req: Request, res: Response, otpCode: string, email: string, password: string) {
 
         const user = await this.userRepository.findByEmail({
             email
@@ -422,18 +467,18 @@ export class AuthService {
         await this.validateAccount(user!)
 
         await this.otpService.verifyOtp({
-            userId:user!._id,
+            userId: user!._id,
             otpCode,
-            type:OtpTypeEnum.FORGET_PASSWORD
+            type: OtpTypeEnum.FORGET_PASSWORD
         });
 
         user!.password = await generateHash({
-            text:password
+            text: password
         });
 
         await user!.save()
 
-       return await this.login({email,password},res,req)
+        return await this.login({ email, password }, res, req)
 
     }
 

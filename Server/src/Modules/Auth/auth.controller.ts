@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Req,
   Res,
@@ -20,6 +22,8 @@ import { AuthenticationGuard } from 'src/Common/Guards/Authentication/authentica
 import { TokenTypeEnum } from 'src/Common/Utils/Security/token.service';
 import type { I_Request } from 'src/Common/Interfaces/request.interface';
 import { ConfirmResetPasswordDto, ForgetPasswordDto } from './dto/forget.password.otp';
+import { Types } from 'mongoose';
+import { RevokeSessionDto } from './dto/revoke.session.dto';
 
 @UsePipes(
   new ValidationPipe({
@@ -152,7 +156,47 @@ export class AuthController {
 
     return SuccessResponse({
       message: 'logout successfully.',
+      info: "User Credentials Removed From Cookies",
+    });
 
+  }
+
+
+  // ===> Get User Sessions
+
+  @SetMetadata("tokenType", TokenTypeEnum.REFRESH)
+  @UseGuards(AuthenticationGuard)
+  @Get('sessions')
+  async getSessions(
+    @Req() req: I_Request,
+    @Res({ passthrough: true }) res: Response
+  ) {
+
+    const sessions = await this.authService.getSessions(req.credentials.user!._id!, req.credentials.decoded!.jti);
+
+    return SuccessResponse({
+      message: 'Sessions Fetched Successfully.',
+      data: { sessions }
+    });
+
+  }
+
+
+  // ===> Revoke Sessions
+  @SetMetadata("tokenType", TokenTypeEnum.REFRESH)
+  @UseGuards(AuthenticationGuard)
+  @Delete('sessions/:_id')
+  async revokeSession(
+    @Req() req: I_Request,
+    @Param() param: RevokeSessionDto,
+    @Res({ passthrough: true }) res: Response
+  ) {
+
+    const message = await this.authService.revokeSession(param._id, req.credentials.decoded!.jti, res);
+
+    return SuccessResponse({
+      message,
+      info: message === "Logout Success" ? "User Credentials Removed From Cookies" : undefined
     });
 
   }
