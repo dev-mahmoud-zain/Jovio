@@ -1,7 +1,11 @@
+import { PickType } from "@nestjs/mapped-types";
 import { IsMongoId } from "class-validator";
 import { Types } from "mongoose";
+import { GeneralFieldsDto } from "src/Common/Validation/general.fields.dto";
 
-export class RevokeSessionDto{
-    @IsMongoId({message:"Session Id Must Be ObjectId Type"})
-    _id:Types.ObjectId;
+
+
+export class RevokeSessionDto extends PickType(GeneralFieldsDto, [
+    '_id',
+]) {
 }

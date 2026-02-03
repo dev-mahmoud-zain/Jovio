@@ -1,5 +1,4 @@
 import { PickType } from '@nestjs/mapped-types';
-import { IsString } from 'class-validator';
 import { IsMatch } from 'src/Common/Validation/custom.validator';
 import { GeneralFieldsDto } from 'src/Common/Validation/general.fields.dto';
 
@@ -11,10 +10,9 @@ export class ForgetPasswordDto extends PickType(GeneralFieldsDto, [
 export class ConfirmResetPasswordDto extends PickType(GeneralFieldsDto, [
     'email',
     'otpCode',
-    'password'
+    'password',
 ]) {
 
-    @IsMatch('password')
-    @IsString()
-    confirmPassword: string;
+    @IsMatch("password")
+    confirmPassword: string
 }

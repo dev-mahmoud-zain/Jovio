@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Put,
   Req,
   Res,
   SetMetadata,
@@ -24,6 +25,7 @@ import type { I_Request } from 'src/Common/Interfaces/request.interface';
 import { ConfirmResetPasswordDto, ForgetPasswordDto } from './dto/forget.password.otp';
 import { Types } from 'mongoose';
 import { RevokeSessionDto } from './dto/revoke.session.dto';
+import { ChangePasswordDto } from './dto/change.password.dto';
 
 @UsePipes(
   new ValidationPipe({
@@ -63,8 +65,6 @@ export class AuthController {
 
     const data = await this.authService.verifyAccount(req, res, body);
 
-    // تاني login  المفروض ارجعله توكن عشان ميعملش ريكوست 
-
     return SuccessResponse({
       message: 'Account Verified successfully.',
       info: "User Credentials Saved In Cookies",
@@ -93,8 +93,6 @@ export class AuthController {
 
 
   }
-
-
 
 
   // ================================ Authentication & Session Management ================================
@@ -237,6 +235,27 @@ export class AuthController {
     });
 
   }
+
+
+  // ===> Change Password 
+
+
+  @UseGuards(AuthenticationGuard)
+  @Put("change-password")
+  async changePassword(
+    @Req() req: I_Request,
+    @Body() body: ChangePasswordDto
+  ) {
+
+    await this.authService.changePassword(req.credentials.user!._id!, body.currentPassword, body.newPassword)
+
+    return SuccessResponse({
+      message: 'Password Changed successfully.',
+    });
+
+
+  }
+
 
 
 }

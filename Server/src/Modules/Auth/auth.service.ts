@@ -392,6 +392,9 @@ export class AuthService {
     }
 
 
+    // ===> Get User Sessions
+
+
     async getSessions(userId: Types.ObjectId, currentJti: string) {
 
         const sessions = await this.tokenService.getSessions(userId);
@@ -418,7 +421,7 @@ export class AuthService {
     // ===> Revoke Sessions
 
 
-    async revokeSession(sessionId: Types.ObjectId, currentJti: string,res:Response) {
+    async revokeSession(sessionId: Types.ObjectId, currentJti: string, res: Response) {
 
         const result = await this.tokenService.revokeSession(sessionId, currentJti);
 
@@ -480,6 +483,50 @@ export class AuthService {
 
         return await this.login({ email, password }, res, req)
 
+    }
+
+    // ===> Change Password 
+
+
+    async changePassword(id: Types.ObjectId, currentPassword: string, newPassword: string) {
+
+        const user = await this.userRepository.findById({
+            id: id
+        })
+
+
+        if (!await compareHash({
+            plainText: currentPassword,
+            hashText: user!.password
+        })) {
+            throw ErrorResponse.forbidden({
+                message: "Fail To Update Password",
+                issus: [{
+                    path: "currentPassword",
+                    info: "User Password Is Incorrect"
+                }]
+            })
+        }
+
+        if (currentPassword === newPassword) {
+            throw ErrorResponse.badRequest({
+                message: "Fail To Update Password",
+                issus: [{
+                    path: "newPassword",
+                    info: 'New password must be different from the current password',
+                }]
+            });
+        }
+
+
+
+        user!.password = await generateHash({
+            text: newPassword
+        });
+
+
+        await user!.save();
+        
     }
 
 
