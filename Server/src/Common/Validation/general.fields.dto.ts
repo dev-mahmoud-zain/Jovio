@@ -46,7 +46,7 @@ export class GeneralFieldsDto {
   gender: GenderEnum;
 
   @Matches(GeneralRegex.DATE_OF_BIRTH, {
-    message:GeneralRegexMessage.DATE_OF_BIRTH
+    message: GeneralRegexMessage.DATE_OF_BIRTH
   })
   dateOfBirth: string;
 
@@ -54,7 +54,7 @@ export class GeneralFieldsDto {
   userStatus: UserStatusEnum;
 
 
-  @Length(6)
+  @Length(6, 6, { message: 'OTP code must be exactly 6 characters or digits' })
   @IsString()
   otpCode: string;
 

@@ -26,6 +26,7 @@ import { ConfirmResetPasswordDto, ForgetPasswordDto } from './dto/forget.passwor
 import { Types } from 'mongoose';
 import { RevokeSessionDto } from './dto/revoke.session.dto';
 import { ChangePasswordDto } from './dto/change.password.dto';
+import { ChangeEmailReqDto, ConfirmChangeEmailDto } from './dto/change.email.dto';
 
 @UsePipes(
   new ValidationPipe({
@@ -239,7 +240,6 @@ export class AuthController {
 
   // ===> Change Password 
 
-
   @UseGuards(AuthenticationGuard)
   @Put("change-password")
   async changePassword(
@@ -257,5 +257,44 @@ export class AuthController {
   }
 
 
+  // ===> Request To Change Email 
+
+  @UseGuards(AuthenticationGuard)
+  @Put("change-email")
+  async requestToChangeEmail(
+    @Req() req: I_Request,
+    @Body() body: ChangeEmailReqDto
+  ) {
+
+
+    await this.authService.requestToChangeEmail(req.credentials.user!, body.email, body.password);
+
+    return SuccessResponse({
+      message: 'Request To Change Email successfully.',
+      info: 'Confirmation OTP sent to your email.',
+    });
+
+
+  }
+
+  // ===> Confirm Change Email 
+
+  @UseGuards(AuthenticationGuard)
+  @Post("confirm-change-email")
+  async confirmChangeEmail(
+    @Req() req: I_Request,
+    @Body() body: ConfirmChangeEmailDto
+  ) {
+
+
+    await this.authService.confirmChangeEmail(req.credentials.user!, body.otpCode);
+
+    return SuccessResponse({
+      message: 'Your Email Changed successfully.',
+
+    });
+
+
+  }
 
 }

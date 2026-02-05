@@ -2,7 +2,7 @@ import nodemailer, { Transporter } from 'nodemailer';
 
 import { Injectable } from '@nestjs/common';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
-import { forgetPasswordTemplate, verifyAccountTemplate } from './email.templates';
+import { changeEmailTemplate, forgetPasswordTemplate, verifyAccountTemplate } from './email.templates';
 import { EmailSubjectEnum } from './email.subjects';
 
 @Injectable()
@@ -76,6 +76,20 @@ export class EmailService {
         })
     }
 
-    
+   async changeEmail ({
+        email,
+        OTPCode
+    }: {
+        email: string,
+        OTPCode: string
+    }) {
+        const html = await changeEmailTemplate({ OTPCode })
+        this.sendEmail({
+            to: email,
+            subject: EmailSubjectEnum.CHANGE_EMAIL,
+            html
+        })
+    }
+
 
 }

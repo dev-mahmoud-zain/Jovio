@@ -16,7 +16,7 @@ export interface I_User {
     fullName: string;
 
     email: string;
-    emailConfirmedAt?: Date;
+    accountVerifyedAt?: Date;
     newEmail?: string;
 
     phoneNumber?: string;

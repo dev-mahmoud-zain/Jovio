@@ -56,7 +56,7 @@ export class User implements I_User {
         type: Date,
         required: false
     })
-    emailConfirmedAt?: Date;
+    accountVerifyedAt?: Date;
 
     @Prop({
         type: String,

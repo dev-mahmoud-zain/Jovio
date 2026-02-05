@@ -38,13 +38,15 @@ export class OtpService {
 
 
         const plainOtp = this.generateCode();
+        let expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
 
         if (! await this.otpRepository.create({
             data: [{
                 userId,
                 otp: await generateHash({ text: plainOtp }),
                 type,
-                expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+                expiresAt
             }]
         })) {
 
@@ -55,6 +57,7 @@ export class OtpService {
         }
 
         switch (type) {
+
             case OtpTypeEnum.VERIFY_ACCOUNT:
 
                 this.emailService.verifyAccount({
@@ -72,6 +75,13 @@ export class OtpService {
                 })
 
                 break;
+
+            case OtpTypeEnum.CHANGE_EMAIL:
+
+                this.emailService.changeEmail({
+                    email,
+                    OTPCode: plainOtp
+                })
 
             default:
                 break;
