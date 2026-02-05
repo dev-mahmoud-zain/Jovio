@@ -149,7 +149,7 @@ export class AuthService {
 
 
         // Check If Account Confirmed
-        if (!user.emailConfirmedAt && user.provider === ProviderEnum.SYSTEM) {
+        if (!user.accountVerifyedAt && user.provider === ProviderEnum.SYSTEM) {
             throw ErrorResponse.badRequest({
                 message: "Please Verify Your Account First"
             })
@@ -268,7 +268,7 @@ export class AuthService {
             otpCode
         });
 
-        user.emailConfirmedAt = new Date;
+        user.accountVerifyedAt = new Date;
         user.save()
 
         return await this.setUserLogin(req, res, user);
@@ -526,8 +526,86 @@ export class AuthService {
 
 
         await user!.save();
-        
+
     }
 
+    // ===> Request To Change Email 
+
+    async requestToChangeEmail(user: I_User, email: string, password: string) {
+
+
+
+
+        if (await this.userRepository.findByEmail({
+            email
+        })) {
+            throw ErrorResponse.badRequest({
+                message: "Fail To Change User Email",
+                info: "This Email Already Exists"
+            })
+        }
+
+
+        if (!await compareHash({
+            plainText: password,
+            hashText: user.password
+        })) {
+            throw ErrorResponse.forbidden({
+                message: "Invalid credentials",
+                info: "Password is incorrect"
+            })
+        }
+
+        await Promise.all([
+            this.otpService.sendOtpToEmail({
+                userId: user._id!,
+                email,
+                type: OtpTypeEnum.CHANGE_EMAIL
+            }),
+
+            this.userRepository.updateOne({
+                filter: {
+                    _id: user._id!
+                }, update: {
+                    newEmail: await this.encryptionService.encrypt(email)
+                }
+            })
+        ])
+
+
+    }
+
+    // ===> Confirm Change Email 
+
+    async confirmChangeEmail(user: I_User, otpCode: string) {
+
+
+        if (!user.newEmail) {
+            throw ErrorResponse.badRequest({
+                message: "No pending email change request",
+            });
+        }
+
+        await this.otpService.verifyOtp({
+            userId: user._id!,
+            otpCode,
+            type: OtpTypeEnum.CHANGE_EMAIL
+        });
+
+        await this.userRepository.updateOne({
+            filter: {
+                _id: user._id!
+            },
+            update: {
+                $set: {
+                    email: user.newEmail,
+                },
+                $unset: {
+                    newEmail: true
+                }
+            }
+        })
+
+    }
 
 }
