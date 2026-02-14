@@ -12,16 +12,18 @@ import { InjectConnection, MongooseModule } from '@nestjs/mongoose';
 import { CommonModule } from './Common/Common-Modules/common.module';
 import { LoggerMiddleware } from './Common/Middlewares/logging.middlewares';
 import { AuthModule } from './Modules/Auth/auth.module';
+import { UsersModule } from './Modules/Users/users.module';
+import mailConfig from './Common/Utils/Email/Config/email.config';
 
 @Module({
   imports: [
-    
     CommonModule,
     AuthModule,
-
+    UsersModule,
     ConfigModule.forRoot({
       envFilePath: '.env',
       isGlobal: true,
+      load: [mailConfig],
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -30,13 +32,12 @@ import { AuthModule } from './Modules/Auth/auth.module';
       }),
       inject: [ConfigService],
     }),
-
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule implements OnModuleInit, NestModule {
-  constructor(@InjectConnection() private readonly connection) { }
+  constructor(@InjectConnection() private readonly connection) {}
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes('*');
   }

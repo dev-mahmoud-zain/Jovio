@@ -2,9 +2,9 @@ import { PickType } from '@nestjs/mapped-types';
 import { IsOptional, IsString } from 'class-validator';
 import { UserStatusEnum } from 'src/Common/Enums/user.status.enum';
 import { IsMatch } from 'src/Common/Validation/custom.validator';
-import { GeneralFieldsDto } from 'src/Common/Validation/general.fields.dto';
+import { BaseUser } from 'src/Modules/Users/dto/base-user.dto';
 
-export class SignupDto extends PickType(GeneralFieldsDto, ['fullName',
+export class SignupDto extends PickType(BaseUser, ['fullName',
     'email',
     'phoneNumber',
     'password',
@@ -23,4 +23,3 @@ export class SignupDto extends PickType(GeneralFieldsDto, ['fullName',
     @IsOptional()
     phoneNumber: string
 }
-

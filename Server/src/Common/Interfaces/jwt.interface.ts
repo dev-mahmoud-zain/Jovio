@@ -1,6 +1,5 @@
 import { Types } from "mongoose";
-import { TokenTypeEnum } from "../Utils/Security/token.service";
-
+import { TokenTypeEnum } from "../Types/token.types";
 
 export enum DeviceTypeEnum {
     DESKTOP = "Desktop",
