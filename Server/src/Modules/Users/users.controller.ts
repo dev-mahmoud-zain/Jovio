@@ -28,7 +28,7 @@ export class UsersController {
     @Req() req: I_Request,
     @Res() res: Response,
   ) {
-    await this.usersService.deleteAccount(body, user, req, res);
+    // await this.usersService.deleteAccount(body, user, req, res);
   }
   @Put('update')
   @UseGuards(AuthenticationGuard)
