@@ -2,11 +2,10 @@ import crypto from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { OtpRepository } from 'src/Database/Repository/otp.repository';
 import { Types } from 'mongoose';
-import { OtpTypeEnum } from 'src/Common/Types/otp.types';
+import { OtpTypeEnum } from 'src/Common/Enums/otp.enum';
 import { compareHash, generateHash } from '../Security/hash';
-import { EmailService } from '../Email/email.service';
 import { ExceptionFactory } from '../Response/error.response';
-import { EncryptionService } from '../Security/encryption';
+import { EmailService } from '../Email/email.service';
 
 const ErrorResponse = new ExceptionFactory();
 
@@ -15,7 +14,6 @@ export class OtpService {
   constructor(
     private readonly otpRepository: OtpRepository,
     private readonly emailService: EmailService,
-    private readonly encryptionService: EncryptionService,
   ) {}
 
   private generateCode() {
@@ -32,6 +30,7 @@ export class OtpService {
     type: OtpTypeEnum;
   }) {
     const plainOtp = this.generateCode();
+    let expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     if (
       !(await this.otpRepository.create({
@@ -40,7 +39,7 @@ export class OtpService {
             userId,
             otp: await generateHash({ text: plainOtp }),
             type,
-            expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+            expiresAt,
           },
         ],
       }))
@@ -52,7 +51,7 @@ export class OtpService {
 
     switch (type) {
       case OtpTypeEnum.VERIFY_ACCOUNT:
-        await this.emailService.verifyAccount({
+        this.emailService.verifyAccount({
           email,
           OTPCode: plainOtp,
         });
@@ -60,12 +59,18 @@ export class OtpService {
         break;
 
       case OtpTypeEnum.FORGET_PASSWORD:
-        await this.emailService.forgetPassword({
+        this.emailService.forgetPassword({
           email,
           OTPCode: plainOtp,
         });
 
         break;
+
+      case OtpTypeEnum.CHANGE_EMAIL:
+        this.emailService.changeEmail({
+          email,
+          OTPCode: plainOtp,
+        });
 
       default:
         break;

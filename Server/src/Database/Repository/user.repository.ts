@@ -73,12 +73,14 @@ export class UserRepository extends DatabaseRepository<User> {
       getFreezed,
     });
   }
+
   async deleteUser(userId: string | Types.ObjectId): Promise<boolean> {
     const result = await this.model.findByIdAndUpdate(userId, {
       isDeleted: true,
     });
     return !!result;
   }
+  
   async updateUser({
     id,
     updateData,

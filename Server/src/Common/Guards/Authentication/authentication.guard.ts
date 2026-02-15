@@ -3,8 +3,9 @@ import { ExceptionFactory } from 'src/Common/Utils/Response/error.response';
 import { User } from 'src/Database/Models/user.model';
 import { Reflector } from '@nestjs/core';
 import { I_Request } from 'src/Common/Interfaces/request.interface';
-import { TokenTypeEnum, SignatureLevelEnum, I_Decoded } from 'src/Common/Types/token.types';
+import { I_Decoded } from 'src/Common/Types/token.types';
 import { TokenService } from 'src/Common/Utils/Security/token.service';
+import { SignatureLevelEnum, TokenTypeEnum } from 'src/Common/Enums/token.enum';
 
 const ErrorResponse = new ExceptionFactory();
 

@@ -1,20 +1,24 @@
-import { PickType } from '@nestjs/mapped-types';
-import { IsString } from 'class-validator';
-import { IsMatch } from 'src/Common/Validation/custom.validator';
-import { GeneralFieldsDto } from 'src/Common/Validation/general.fields.dto';
+import {
+  PickFromDtos,
+  configField,
+} from 'src/Common/Validation/generic-picker.validation';
+import { BaseUserDto } from 'src/Modules/Users/dto/base-user.dto';
+import { BaseAuthDto } from './base-auth.dto';
+import { IsMatch } from 'src/Common/Decorators/isMatch.decorator';
 
-export class ForgetPasswordDto extends PickType(GeneralFieldsDto, [
-    'email',
-]) {
-}
+const forgetPasswordFields = [
+  configField({ source: BaseUserDto, name: 'email', isRequired: true }),
+];
 
-export class ConfirmResetPasswordDto extends PickType(GeneralFieldsDto, [
-    'email',
-    'otpCode',
-    'password'
-]) {
+export class ForgetPasswordDto extends PickFromDtos(forgetPasswordFields) {}
 
-    @IsMatch('password')
-    @IsString()
-    confirmPassword: string;
+const confirmResetFields = [
+  configField({ source: BaseUserDto, name: 'email', isRequired: true }),
+  configField({ source: BaseAuthDto, name: 'otpCode', isRequired: true }),
+  configField({ source: BaseUserDto, name: 'password', isRequired: true }),
+];
+
+export class ConfirmResetPasswordDto extends PickFromDtos(confirmResetFields) {
+  @IsMatch('password')
+  confirmPassword: string;
 }

@@ -12,7 +12,6 @@ import { JwtRepository } from 'src/Database/Repository/jwt.repository';
 import { Jwt, JwtSchema } from 'src/Database/Models/jwt.model';
 import { SecurityLoggerService } from '../Middlewares/security.logger.service';
 import { EmailModule } from '../Utils/Email/email.module';
-import { MailerService } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -27,7 +26,6 @@ import { MailerService } from '@nestjs-modules/mailer';
   providers: [
     UserRepository,
     EncryptionService,
-    EmailService,
     OtpService,
     OtpRepository,
     CookiesService,
@@ -36,9 +34,9 @@ import { MailerService } from '@nestjs-modules/mailer';
   ],
 
   exports: [
+    EmailModule,
     UserRepository,
     EncryptionService,
-    EmailService,
     OtpService,
     OtpRepository,
     MongooseModule,

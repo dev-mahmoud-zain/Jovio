@@ -11,9 +11,8 @@ import { I_Session } from './client-info.service';
 import {
   I_Decoded,
   I_SignToken,
-  SignatureLevelEnum,
-  TokenTypeEnum,
 } from 'src/Common/Types/token.types';
+import { SignatureLevelEnum, TokenTypeEnum } from 'src/Common/Enums/token.enum';
 
 const ErrorResponse = new ExceptionFactory();
 

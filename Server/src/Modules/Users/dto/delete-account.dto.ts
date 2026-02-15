@@ -1,9 +1,16 @@
 import { IsString, IsOptional, MaxLength } from 'class-validator';
 import { UserDefinitions } from '../Definitions/user.definitions';
-import { PickType } from '@nestjs/mapped-types';
-import { BaseUser } from './base-user.dto';
+import { BaseUserDto } from './base-user.dto';
+import {
+  PickFromDtos,
+  configField,
+} from 'src/Common/Validation/generic-picker.validation';
 
-export class DeleteAccountDto extends PickType(BaseUser, ['password']) {
+const deleteAccountFields = [
+  configField({ source: BaseUserDto, name: 'password', isRequired: true }),
+];
+
+export class DeleteAccountDto extends PickFromDtos(deleteAccountFields) {
   @IsOptional()
   @IsString()
   @MaxLength(UserDefinitions.LIMITS.bio.MAX)

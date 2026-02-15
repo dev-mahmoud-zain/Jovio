@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Put,
   Req,
   Res,
   SetMetadata,
@@ -13,20 +14,22 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { SignupDto } from './dto/signup.dto';
+import { SignupDto } from './dto/sign-up.dto';
 import { VerifyAccountDto } from './dto/verify.account.dto';
-import { LoginWithGoogleDto, SystemLoginDto } from './dto/login.dto';
+import { LoginWithGoogleDto, SystemLoginDto } from './dto/sign-in.dto';
 import { SuccessResponse } from 'src/Common/Utils/Response/success.response';
 import type { Request, Response } from 'express';
 import { AuthenticationGuard } from 'src/Common/Guards/Authentication/authentication.guard';
 import type { I_Request } from 'src/Common/Interfaces/request.interface';
-import {
-  ConfirmResetPasswordDto,
-  ForgetPasswordDto,
-} from './dto/forget.password.otp';
 import { Types } from 'mongoose';
 import { RevokeSessionDto } from './dto/revoke.session.dto';
-import { TokenTypeEnum } from 'src/Common/Types/token.types';
+import { ChangePasswordDto } from './dto/change.password.dto';
+import {
+  ChangeEmailReqDto,
+  ConfirmChangeEmailDto,
+} from './dto/change.email.dto';
+import { TokenTypeEnum } from 'src/Common/Enums/token.enum';
+import { ConfirmResetPasswordDto, ForgetPasswordDto } from './dto/forget.password.otp';
 
 @UsePipes(
   new ValidationPipe({
@@ -61,8 +64,6 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const data = await this.authService.verifyAccount(req, res, body);
-
-    // تاني login  المفروض ارجعله توكن عشان ميعملش ريكوست
 
     return SuccessResponse({
       message: 'Account Verified successfully.',
@@ -223,6 +224,60 @@ export class AuthController {
     return SuccessResponse({
       message: 'Password Reset successfully.',
       info: 'User Credentials Saved In Cookies',
+    });
+  }
+
+  // ===> Change Password
+
+  @UseGuards(AuthenticationGuard)
+  @Put('change-password')
+  async changePassword(@Req() req: I_Request, @Body() body: ChangePasswordDto) {
+    await this.authService.changePassword(
+      req.credentials.user!._id!,
+      body.currentPassword,
+      body.newPassword,
+    );
+
+    return SuccessResponse({
+      message: 'Password Changed successfully.',
+    });
+  }
+
+  // ===> Request To Change Email
+
+  @UseGuards(AuthenticationGuard)
+  @Put('change-email')
+  async requestToChangeEmail(
+    @Req() req: I_Request,
+    @Body() body: ChangeEmailReqDto,
+  ) {
+    await this.authService.requestToChangeEmail(
+      req.credentials.user!,
+      body.email,
+      body.password,
+    );
+
+    return SuccessResponse({
+      message: 'Request To Change Email successfully.',
+      info: 'Confirmation OTP sent to your email.',
+    });
+  }
+
+  // ===> Confirm Change Email
+
+  @UseGuards(AuthenticationGuard)
+  @Post('confirm-change-email')
+  async confirmChangeEmail(
+    @Req() req: I_Request,
+    @Body() body: ConfirmChangeEmailDto,
+  ) {
+    await this.authService.confirmChangeEmail(
+      req.credentials.user!,
+      body.otpCode,
+    );
+
+    return SuccessResponse({
+      message: 'Your Email Changed successfully.',
     });
   }
 }

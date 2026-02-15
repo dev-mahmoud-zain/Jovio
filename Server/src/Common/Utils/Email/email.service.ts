@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  changeEmailTemplate,
   forgetPasswordTemplate,
   verifyAccountTemplate,
 } from './email.templates';
@@ -47,6 +48,14 @@ export class EmailService {
     await this.sendEmail({
       to: email,
       subject: EmailSubjectEnum.FORGET_PASSWORD,
+      html,
+    });
+  }
+  async changeEmail({ email, OTPCode }: { email: string; OTPCode: string }) {
+    const html = await changeEmailTemplate({ OTPCode });
+    this.sendEmail({
+      to: email,
+      subject: EmailSubjectEnum.CHANGE_EMAIL,
       html,
     });
   }

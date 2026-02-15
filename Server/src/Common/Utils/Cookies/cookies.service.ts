@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { TokenTypeEnum } from 'src/Common/Types/token.types';
+import { TokenTypeEnum } from 'src/Common/Enums/token.enum';
 
 export class CookiesService {
   constructor() {}

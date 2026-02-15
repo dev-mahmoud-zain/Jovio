@@ -66,11 +66,16 @@ export class User implements I_User {
     match: UserDefinitions.REGEX.EMAIL,
   })
   newEmail?: string;
+    @Prop({
+        type: Date,
+        required: false
+    })
+    accountVerifyedAt?: Date;
 
   @Prop({
     type: String,
     required: false,
-    match: UserDefinitions.REGEX.PHONE,
+    match: UserDefinitions.REGEX.PHONE_NUMBER,
   })
   phoneNumber?: string;
 

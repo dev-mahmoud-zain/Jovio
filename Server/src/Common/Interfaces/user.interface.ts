@@ -13,8 +13,10 @@ export interface I_User {
   firstName: string;
 
   lastName: string;
-
+  
   fullName: string;
+
+  accountVerifyedAt?: Date;
 
   email: string;
   emailConfirmedAt?: Date;

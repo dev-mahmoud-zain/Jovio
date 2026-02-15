@@ -4,22 +4,22 @@ import { JwtRepository } from './../../Database/Repository/jwt.repository';
 import { _default } from './../../../node_modules/@types/validator/index.d';
 import { UserRepository } from './../../Database/Repository/user.repository';
 import { Injectable } from '@nestjs/common';
-import { SignupDto } from './dto/signup.dto';
+import { SignupDto } from './dto/sign-up.dto';
 import { ExceptionFactory } from 'src/Common/Utils/Response/error.response';
 import { compareHash, generateHash } from 'src/Common/Utils/Security/hash';
 import { EncryptionService } from 'src/Common/Utils/Security/encryption';
 import { OtpService } from 'src/Common/Utils/Otp/otp.service';
-import { OtpTypeEnum } from 'src/Common/Types/otp.types';
+import { OtpTypeEnum } from 'src/Common/Enums/otp.enum';
 import { VerifyAccountDto } from './dto/verify.account.dto';
-import { SystemLoginDto } from './dto/login.dto';
+import { SystemLoginDto } from './dto/sign-in.dto';
+import { TokenService } from 'src/Common/Utils/Security/token.service';
 import { Request, Response } from 'express';
 import { CookiesService } from 'src/Common/Utils/Cookies/cookies.service';
 import { I_Request } from 'src/Common/Interfaces/request.interface';
 import { Types } from 'mongoose';
 import { I_User } from 'src/Common/Interfaces/user.interface';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
-import { SignatureLevelEnum, TokenTypeEnum } from 'src/Common/Types/token.types';
-import { TokenService } from 'src/Common/Utils/Security/token.service';
+import { SignatureLevelEnum, TokenTypeEnum } from 'src/Common/Enums/token.enum';
 
 const ErrorResponse = new ExceptionFactory();
 
@@ -164,7 +164,7 @@ export class AuthService {
 
   async validateAccount(user: I_User, password?: string) {
     // Check If Account Confirmed
-    if (!user.emailConfirmedAt && user.provider === ProviderEnum.SYSTEM) {
+    if (!user.accountVerifyedAt && user.provider === ProviderEnum.SYSTEM) {
       throw ErrorResponse.badRequest({
         message: 'Please Verify Your Account First',
       });
@@ -241,7 +241,7 @@ export class AuthService {
       });
     }
 
-    await this.otpService.sendOtpToEmail({
+    this.otpService.sendOtpToEmail({
       email: plainEmail,
       userId: user._id,
       type: OtpTypeEnum.VERIFY_ACCOUNT,
@@ -274,7 +274,7 @@ export class AuthService {
       otpCode,
     });
 
-    user.emailConfirmedAt = new Date();
+    user.accountVerifyedAt = new Date();
     user.save();
 
     return await this.setUserLogin(req, res, user);
@@ -316,7 +316,6 @@ export class AuthService {
 
   async login(body: SystemLoginDto, res: Response, req: Request) {
     // Check If User Exist
-    console.log(body);
     const user = await this.userRepository.findExistsUser({
       filter: [
         {
@@ -401,6 +400,8 @@ export class AuthService {
       });
     }
   }
+
+  // ===> Get User Sessions
 
   async getSessions(userId: Types.ObjectId, currentJti: string) {
     const sessions = await this.tokenService.getSessions(userId);
@@ -488,5 +489,126 @@ export class AuthService {
     await user!.save();
 
     return await this.login({ email, password }, res, req);
+  }
+
+  // ===> Change Password
+
+  async changePassword(
+    id: Types.ObjectId,
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    const user = await this.userRepository.findById({
+      id: id,
+    });
+
+    if (
+      !(await compareHash({
+        plainText: currentPassword,
+        hashText: user!.password,
+      }))
+    ) {
+      throw ErrorResponse.forbidden({
+        message: 'Fail To Update Password',
+        issus: [
+          {
+            path: 'currentPassword',
+            info: 'User Password Is Incorrect',
+          },
+        ],
+      });
+    }
+
+    if (currentPassword === newPassword) {
+      throw ErrorResponse.badRequest({
+        message: 'Fail To Update Password',
+        issus: [
+          {
+            path: 'newPassword',
+            info: 'New password must be different from the current password',
+          },
+        ],
+      });
+    }
+
+    user!.password = await generateHash({
+      text: newPassword,
+    });
+
+    await user!.save();
+  }
+
+  // ===> Request To Change Email
+
+  async requestToChangeEmail(user: I_User, email: string, password: string) {
+    if (
+      await this.userRepository.findByEmail({
+        email,
+      })
+    ) {
+      throw ErrorResponse.badRequest({
+        message: 'Fail To Change User Email',
+        info: 'This Email Already Exists',
+      });
+    }
+
+    if (
+      !(await compareHash({
+        plainText: password,
+        hashText: user.password,
+      }))
+    ) {
+      throw ErrorResponse.forbidden({
+        message: 'Invalid credentials',
+        info: 'Password is incorrect',
+      });
+    }
+
+    await Promise.all([
+      this.otpService.sendOtpToEmail({
+        userId: user._id!,
+        email,
+        type: OtpTypeEnum.CHANGE_EMAIL,
+      }),
+
+      this.userRepository.updateOne({
+        filter: {
+          _id: user._id!,
+        },
+        update: {
+          newEmail: await this.encryptionService.encrypt(email),
+        },
+      }),
+    ]);
+  }
+
+  // ===> Confirm Change Email
+
+  async confirmChangeEmail(user: I_User, otpCode: string) {
+    if (!user.newEmail) {
+      throw ErrorResponse.badRequest({
+        message: 'No pending email change request',
+      });
+    }
+
+    await this.otpService.verifyOtp({
+      userId: user._id!,
+      otpCode,
+      type: OtpTypeEnum.CHANGE_EMAIL,
+    });
+
+    await this.userRepository.updateOne({
+      filter: {
+        _id: user._id!,
+      },
+      update: {
+        $set: {
+          email: user.newEmail,
+        },
+        $unset: {
+          newEmail: true,
+        },
+      },
+    });
   }
 }

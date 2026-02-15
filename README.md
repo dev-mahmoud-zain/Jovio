@@ -114,7 +114,7 @@ Environment example files (`.env.example`) are provided to guide setup.
 ### UI/UX Designer
 - Hadeer Mamdoh
 - Rehab Hussin
-- Nermeen Abeid 
+- 
 ---
 
 ## 🛠️ Development Principles

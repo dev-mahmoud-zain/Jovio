@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument, Types } from "mongoose";
+import { TokenTypeEnum } from "src/Common/Enums/token.enum";
 import { BrowserEnum, DeviceTypeEnum, I_DeviceInfo, I_Jwt, OSEnum } from "src/Common/Interfaces/jwt.interface";
-import { TokenTypeEnum } from "src/Common/Types/token.types";
 
 @Schema({ _id: false })
 export class DeviceInfo implements I_DeviceInfo {

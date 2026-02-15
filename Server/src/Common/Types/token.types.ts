@@ -1,15 +1,6 @@
-import { Types } from "mongoose";
-import { RoleEnum } from "../Enums/role.enum";
-
-export enum SignatureLevelEnum {
-  BEARER = 'Bearer',
-  SYSTEM = 'System',
-}
-
-export enum TokenTypeEnum {
-  ACCESS = 'Access',
-  REFRESH = 'Refresh',
-}
+import { Types } from 'mongoose';
+import { RoleEnum } from '../Enums/role.enum';
+import { SignatureLevelEnum, TokenTypeEnum } from '../Enums/token.enum';
 
 export interface I_SignToken {
   payload: {
