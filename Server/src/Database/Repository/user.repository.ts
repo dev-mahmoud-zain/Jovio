@@ -12,6 +12,7 @@ export class UserRepository extends DatabaseRepository<User> {
     @InjectModel(User.name)
     protected override readonly model: Model<H_UserDocument>,
     private readonly encryptionService: EncryptionService,
+
   ) {
     super(model);
   }
@@ -32,10 +33,10 @@ export class UserRepository extends DatabaseRepository<User> {
     });
 
     if (throwError && userExists) {
-      const issus: { path: string; info: string }[] = [];
+      const issues: { path: string; info: string }[] = [];
 
       filter.forEach((f) => {
-        issus.push({
+        issues.push({
           path: f.key,
           info: `User With ${f.key} already exists`,
         });
@@ -43,7 +44,7 @@ export class UserRepository extends DatabaseRepository<User> {
 
       throw ErrorResponse.conflict({
         message: 'User Already Exists',
-        issus,
+        issues,
       });
     }
 
@@ -58,9 +59,9 @@ export class UserRepository extends DatabaseRepository<User> {
   }: {
     email: string;
     select?:
-      | string
-      | readonly string[]
-      | Record<string, number | boolean | string | object>;
+    | string
+    | readonly string[]
+    | Record<string, number | boolean | string | object>;
     options?: QueryOptions<User>;
     getFreezed?: boolean;
   }) {
@@ -74,13 +75,38 @@ export class UserRepository extends DatabaseRepository<User> {
     });
   }
 
+  async findByPhone({
+    phone,
+    select,
+    options,
+    getFreezed,
+  }: {
+    phone: string;
+    select?:
+    | string
+    | readonly string[]
+    | Record<string, number | boolean | string | object>;
+    options?: QueryOptions<User>;
+    getFreezed?: boolean;
+  }) {
+    return this.findOne({
+      filter: {
+        phone: this.encryptionService.encrypt(phone),
+      },
+      select,
+      options,
+      getFreezed,
+    });
+  }
+
+
   async deleteUser(userId: string | Types.ObjectId): Promise<boolean> {
     const result = await this.model.findByIdAndUpdate(userId, {
       isDeleted: true,
     });
     return !!result;
   }
-  
+
   async updateUser({
     id,
     updateData,
@@ -107,7 +133,7 @@ export class UserRepository extends DatabaseRepository<User> {
     if (!updatedUser)
       throw ErrorResponse.notFound({
         message: 'User not found',
-        issus: [{ path: 'id', info: 'No user exists with the provided ID' }],
+        issues: [{ path: 'id', info: 'No user exists with the provided ID' }],
       });
 
     return updatedUser;

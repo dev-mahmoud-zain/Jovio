@@ -20,7 +20,7 @@ export class CustomValidationPipe extends ValidationPipe {
 
         return ErrorResponse.badRequest({
           message: 'Validation failed',
-          issus: formattedErrors,
+          issues: formattedErrors,
         });
       },
     });

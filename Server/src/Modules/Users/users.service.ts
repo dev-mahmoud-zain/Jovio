@@ -20,6 +20,7 @@ export class UsersService {
     res: Response,
   ) {
     await this.authService.validateAccount(user, deleteAccountDto.password);
+    
     try {
       await this.userRepository.deleteUser(user._id!);
       await this.authService.logout(req as I_Request, res);

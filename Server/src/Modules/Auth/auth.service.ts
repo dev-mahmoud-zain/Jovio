@@ -510,7 +510,7 @@ export class AuthService {
     ) {
       throw ErrorResponse.forbidden({
         message: 'Fail To Update Password',
-        issus: [
+        issues: [
           {
             path: 'currentPassword',
             info: 'User Password Is Incorrect',
@@ -522,7 +522,7 @@ export class AuthService {
     if (currentPassword === newPassword) {
       throw ErrorResponse.badRequest({
         message: 'Fail To Update Password',
-        issus: [
+        issues: [
           {
             path: 'newPassword',
             info: 'New password must be different from the current password',

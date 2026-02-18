@@ -23,7 +23,9 @@ export abstract class DatabaseRepository<
   TRawDocument,
   TDocument = HydratedDocument<TRawDocument>,
 > {
-  protected constructor(protected readonly model: Model<TRawDocument>) {}
+  protected constructor(
+    protected readonly model: Model<TRawDocument>,
+  ) { }
 
   async create({
     data,
@@ -46,19 +48,19 @@ export abstract class DatabaseRepository<
   }: {
     filter: QueryFilter<TRawDocument>;
     select?:
-      | string
-      | readonly string[]
-      | Record<string, number | boolean | string | object>;
+    | string
+    | readonly string[]
+    | Record<string, number | boolean | string | object>;
     options?: QueryOptions<TRawDocument>;
     getFreezed?: boolean;
   }) {
     const finalFilter = getFreezed
       ? filter
       : {
-          ...filter,
-          freezedAt: { $exists: false },
-          freezedBy: { $exists: false },
-        };
+        ...filter,
+        freezedAt: { $exists: false },
+        freezedBy: { $exists: false },
+      };
 
     const doc = this.model.findOne(finalFilter).select(select || '');
 
@@ -105,8 +107,8 @@ export abstract class DatabaseRepository<
     filter: QueryFilter<TRawDocument>;
     update: UpdateQuery<TRawDocument>;
     options?:
-      | (mongodb.UpdateOptions & MongooseUpdateQueryOptions<TRawDocument>)
-      | null;
+    | (mongodb.UpdateOptions & MongooseUpdateQueryOptions<TRawDocument>)
+    | null;
   }) {
     const updateWithVersion = {
       ...update,
@@ -123,8 +125,8 @@ export abstract class DatabaseRepository<
     filter: QueryFilter<TRawDocument>;
     update: UpdateQuery<TRawDocument>;
     options?:
-      | (mongodb.UpdateOptions & MongooseUpdateQueryOptions<TRawDocument>)
-      | null;
+    | (mongodb.UpdateOptions & MongooseUpdateQueryOptions<TRawDocument>)
+    | null;
   }): Promise<UpdateWriteOpResult> {
     const updateWithVersion = {
       ...update,
@@ -133,6 +135,34 @@ export abstract class DatabaseRepository<
 
     return this.model.updateMany(filter, updateWithVersion, options);
   }
+
+  async findOneAndUpdate({
+    filter,
+    update,
+    options,
+  }: {
+    filter: QueryFilter<TRawDocument>;
+    update: UpdateQuery<TRawDocument>;
+    options?: MongooseUpdateQueryOptions<TRawDocument> | null;
+  }) {
+
+    const updateWithVersion: UpdateQuery<TRawDocument> = {
+      ...update,
+      $inc: { ...(update.$inc || {}), __v: 1 },
+    };
+
+    return this.model.findOneAndUpdate(
+      filter,
+      updateWithVersion,
+      {
+        ...options,
+        returnDocument: 'after',
+        runValidators: true,
+      }
+    );
+  }
+
+
 
   async deleteOne({
     filter,
@@ -143,4 +173,8 @@ export abstract class DatabaseRepository<
   }) {
     return await this.model.deleteOne(filter, options);
   }
+
+
+
+
 }

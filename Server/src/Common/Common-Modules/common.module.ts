@@ -12,6 +12,9 @@ import { JwtRepository } from 'src/Database/Repository/jwt.repository';
 import { Jwt, JwtSchema } from 'src/Database/Models/jwt.model';
 import { SecurityLoggerService } from '../Middlewares/security.logger.service';
 import { EmailModule } from '../Utils/Email/email.module';
+import { TokenService } from '../Utils/Security/token.service';
+import { CompanyRepository } from 'src/Database/Repository/company.repository';
+import { Company, CompanySchema } from 'src/Database/Models/company.model';
 
 @Module({
   imports: [
@@ -20,6 +23,7 @@ import { EmailModule } from '../Utils/Email/email.module';
       { name: User.name, schema: UserSchema },
       { name: OTP.name, schema: OtpSchema },
       { name: Jwt.name, schema: JwtSchema },
+      { name: Company.name, schema: CompanySchema },
     ]),
   ],
 
@@ -31,6 +35,8 @@ import { EmailModule } from '../Utils/Email/email.module';
     CookiesService,
     JwtRepository,
     SecurityLoggerService,
+    TokenService,
+    CompanyRepository
   ],
 
   exports: [
@@ -43,6 +49,8 @@ import { EmailModule } from '../Utils/Email/email.module';
     CookiesService,
     JwtRepository,
     SecurityLoggerService,
+    TokenService,
+    CompanyRepository
   ],
 })
 export class CommonModule {}

@@ -14,12 +14,14 @@ import { LoggerMiddleware } from './Common/Middlewares/logging.middlewares';
 import { AuthModule } from './Modules/Auth/auth.module';
 import { UsersModule } from './Modules/Users/users.module';
 import mailConfig from './Common/Utils/Email/Config/email.config';
+import { CompaniesModule } from './Modules/Companies/companies.module';
 
 @Module({
   imports: [
     CommonModule,
     AuthModule,
     UsersModule,
+    CompaniesModule,
     ConfigModule.forRoot({
       envFilePath: '.env',
       isGlobal: true,
