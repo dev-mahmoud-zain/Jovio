@@ -3,12 +3,16 @@ import { UserDefinitions } from '../Definitions/user.definitions';
 import { BaseUserDto } from './base-user.dto';
 import {
   PickFromDtos,
-  configField,
+  defineFields,
 } from 'src/Common/Validation/generic-picker.validation';
 
-const deleteAccountFields = [
-  configField({ source: BaseUserDto, name: 'password', isRequired: true }),
-];
+const deleteAccountFields = defineFields([
+  {
+    source: BaseUserDto,
+    name: 'password',
+    isRequired: true,
+  },
+] as const);
 
 export class DeleteAccountDto extends PickFromDtos(deleteAccountFields) {
   @IsOptional()

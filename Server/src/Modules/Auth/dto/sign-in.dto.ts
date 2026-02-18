@@ -2,13 +2,13 @@ import { IsString, MinLength } from 'class-validator';
 import { BaseUserDto } from 'src/Modules/Users/dto/base-user.dto';
 import {
   PickFromDtos,
-  configField,
+  defineFields,
 } from 'src/Common/Validation/generic-picker.validation';
 
-const loginFields = [
-  configField({ source: BaseUserDto, name: 'email', isRequired: true }),
-  configField({ source: BaseUserDto, name: 'password', isRequired: true }),
-];
+const loginFields = defineFields([
+  { source: BaseUserDto, name: 'email', isRequired: true },
+  { source: BaseUserDto, name: 'password', isRequired: true },
+] as const);
 
 export class SystemLoginDto extends PickFromDtos(loginFields) {}
 
