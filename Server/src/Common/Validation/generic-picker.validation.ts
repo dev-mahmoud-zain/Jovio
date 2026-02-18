@@ -36,3 +36,11 @@ export function PickFromDtos(configs: IMultiFieldConfig<any>[]): Type<any> {
 
   return GeneratedDto as Type<any>;
 }
+
+export type ExtractProperties<T extends readonly IMultiFieldConfig<any>[]> = {
+  [K in T[number] as K['name']]: K['source'] extends new (...args: any[]) => infer R
+    ? K['name'] extends keyof R
+      ? R[K['name']]
+      : never
+    : never;
+};
