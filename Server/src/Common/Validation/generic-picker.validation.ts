@@ -4,16 +4,26 @@ import { IsNotEmpty, IsOptional } from 'class-validator';
 
 type Constructor<T = any> = new (...args: any[]) => T;
 
-export interface IMultiFieldConfig<T> {
+interface IMultiFieldConfig<T, K extends keyof T = keyof T> {
   source: Type<T>;
-  name: keyof T;
+  name: K;
   isRequired: boolean;
 }
 
-export const configField = <T>(config: IMultiFieldConfig<T>) => config;
+type ExtractDtoShape<T extends readonly IMultiFieldConfig<any, any>[]> =
+  {
+    [K in T[number] as K['name']]: K['source'] extends Type<infer S>
+      ? K['name'] extends keyof S
+        ? S[K['name']]
+        : any
+      : any;
+  };
 
-export function PickFromDtos(configs: IMultiFieldConfig<any>[]): Type<any> {
+export function PickFromDtos<T extends readonly IMultiFieldConfig<any, any>[]>(
+  configs: T,
+): Type<ExtractDtoShape<T>> {
   const sourceMap = new Map<Type<any>, string[]>();
+
   configs.forEach((c) => {
     const fields = sourceMap.get(c.source) || [];
     fields.push(c.name as string);
@@ -27,20 +37,23 @@ export function PickFromDtos(configs: IMultiFieldConfig<any>[]): Type<any> {
     CombinedBase = IntersectionType(CombinedBase, Picked) as Constructor;
   });
 
-  abstract class GeneratedDto extends CombinedBase {}
+  abstract class GeneratedDto extends (CombinedBase as any) {}
 
   configs.forEach((config) => {
     const decorator = config.isRequired ? IsNotEmpty() : IsOptional();
     decorator(GeneratedDto.prototype, config.name as string);
   });
 
-  return GeneratedDto as Type<any>;
+  return GeneratedDto as Type<ExtractDtoShape<T>>;
 }
 
-export type ExtractProperties<T extends readonly IMultiFieldConfig<any>[]> = {
-  [K in T[number] as K['name']]: K['source'] extends new (...args: any[]) => infer R
-    ? K['name'] extends keyof R
-      ? R[K['name']]
-      : never
-    : never;
-};
+export function defineFields<T extends readonly IMultiFieldConfig<any, any>[]>(
+  fields: {
+    [K in keyof T]: IMultiFieldConfig<any, any> & {
+      source: Type<any>;
+      name: T[K] extends { source: Type<infer S> } ? keyof S : string;
+    };
+  } & T,
+): T {
+  return fields;
+}
