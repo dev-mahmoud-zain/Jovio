@@ -113,8 +113,6 @@ export class CompaniesService {
             throw ErrorResponse.serverError({ message: "Fail To Create Company , Please Try Again" })
         }
 
-
-
         return this.formatCompany(company)
     }
 
@@ -202,7 +200,6 @@ export class CompaniesService {
             });
         }
 
-
         const filters: Record<string, any> = {};
 
         if (keys.name) {
@@ -224,10 +221,17 @@ export class CompaniesService {
             filters.industry = { $regex: keys.industry, $options: "i" };
         }
 
+        if (keys.city) {
+            filters["location.city"] = { $regex: keys.city, $options: "i" };
+        }
+
+        if (keys.country) {
+            filters["location.country"] = { $regex: keys.country, $options: "i" };
+        }
+
         const companies = await this.companyRepository.find({
             filter: filters
         })
-
 
         return companies
 
@@ -248,7 +252,5 @@ export class CompaniesService {
 
         return this.formatCompany(company)
     }
-
-
 
 }

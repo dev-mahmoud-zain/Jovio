@@ -1,30 +1,23 @@
-import { configField, PickFromDtos } from "src/Common/Validation/generic-picker.validation";
+import { defineFields, PickFromDtos } from "src/Common/Validation/generic-picker.validation";
 import { BaseCompanyDto } from "./base.company.dto";
 import { IsOptional, IsString, Matches } from "class-validator";
 import { Transform } from "class-transformer";
 
-const getCompanyFields = [
-    configField({ source: BaseCompanyDto, name: "companyId", isRequired: true })
-]
-
-
+const getCompanyFields = defineFields([{ source: BaseCompanyDto, name: "companyId", isRequired: true }])
 export class GetCompanyByIdDto extends PickFromDtos(getCompanyFields) {
 
 }
 
-
-
-const searchCompaniesFields = [
-    configField({ source: BaseCompanyDto, name: "email", isRequired: false }),
-    configField({ source: BaseCompanyDto, name: "industry", isRequired: false }),
-]
+const searchCompaniesFields = defineFields([
+    { source: BaseCompanyDto, name: "email", isRequired: false },
+    { source: BaseCompanyDto, name: "industry", isRequired: false },
+])
 
 
 export class SearchCompaniesDto extends PickFromDtos(searchCompaniesFields) {
-    
     @IsOptional()
     @IsString()
-    name:string;
+    name: string;
 
     @IsOptional()
     @Matches(/^[a-z]+(-[a-z]+)*$/, {
@@ -51,4 +44,11 @@ export class SearchCompaniesDto extends PickFromDtos(searchCompaniesFields) {
     })
     phone: string;
 
+    @IsOptional()
+    @IsString()
+    city: string;
+
+    @IsOptional()
+    @IsString()
+    country: string;
 }
