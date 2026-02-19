@@ -1,8 +1,13 @@
-import { PickType } from '@nestjs/mapped-types';
-import { GeneralFieldsDto } from 'src/Common/Validation/general.fields.dto';
+import { BaseUserDto } from 'src/Modules/Users/dto/base-user.dto';
+import { BaseAuthDto } from './base-auth.dto';
+import {
+  PickFromDtos,
+  defineFields,
+} from 'src/Common/Validation/generic-picker.validation';
 
-export class VerifyAccountDto extends PickType(GeneralFieldsDto, [
-    'email',
-    'otpCode'
-    ]) {
-}
+const verifyFields = defineFields([
+  { source: BaseUserDto, name: 'email', isRequired: true },
+  { source: BaseAuthDto, name: 'otpCode', isRequired: true }
+] as const );
+
+export class VerifyAccountDto extends PickFromDtos(verifyFields) {}

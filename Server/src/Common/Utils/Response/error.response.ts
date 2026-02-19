@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException, HttpStatus,
 
 interface ExceptionOptions {
   message?: string;
-  issus?: { path?: string; info?: string }[];
+  issues?: { path?: string; info?: string }[];
   info?: string;
   err?:any
 }
@@ -19,7 +19,7 @@ export class ExceptionFactory {
       statusCode,
       message: options.message || name,
       info: options.info,
-      issus: options.issus,
+      issues: options.issues,
     };
 
     return error;

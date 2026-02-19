@@ -1,26 +1,25 @@
-import { Types } from "mongoose";
-import { OtpTypeEnum } from "../Types/otp.types";
+import { Types } from 'mongoose';
+import { OtpTypeEnum } from '../Enums/otp.enum';
 
 export interface I_Otp {
-    _id?:Types.ObjectId;
+  _id?: Types.ObjectId;
 
-    userId:Types.ObjectId;
+  userId: Types.ObjectId;
 
-    otp :string;
+  otp: string;
 
-    type:OtpTypeEnum;
+  type: OtpTypeEnum;
 
-    expiresAt:Date;
+  expiresAt: Date;
 
-    isUsed:Boolean;
+  isUsed: Boolean;
 
-    usedAt?:Date;
+  usedAt?: Date;
 
-    attempts:number;
+  attempts: number;
 
-    blockedUntil:Date;
+  blockedUntil: Date;
 
-    createdAt?:Date;
-    updatedAt?:Date;
-
+  createdAt?: Date;
+  updatedAt?: Date;
 }
